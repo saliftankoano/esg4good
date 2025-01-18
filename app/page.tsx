@@ -161,41 +161,75 @@ function getMarkerConfig(project: Project): MarkerConfig {
   return defaultConfig;
 }
 
+function getUniqueYears(outages: PowerOutage[]): string[] {
+  const years = outages
+    .map((outage) => new Date(outage["Created Date"]).getFullYear())
+    .filter((year, index, self) => self.indexOf(year) === index) // Get unique years
+    .sort((a, b) => b - a); // Sort descending
+
+  return years.map((year) => year.toString());
+}
+
 export default function Home() {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const [selectedProject, setSelectedProject] = useState<Project | undefined>(
     undefined
   );
+  const [showHeatmap, setShowHeatmap] = useState(true);
+  const [selectedYear, setSelectedYear] = useState<string>("all");
+  const [availableYears] = useState<string[]>(() =>
+    getUniqueYears(powerOutages)
+  );
+
+  const getPowerOutageData = async (year: string) => {
+    // Transform the data into GeoJSON format
+    const geojsonData: GeoJSON.FeatureCollection = {
+      type: "FeatureCollection",
+      features: powerOutages
+        .filter((outage: PowerOutage) => {
+          if (!outage.Latitude || !outage.Longitude) return false;
+          if (year === "all") return true;
+
+          // Parse the date string (format: "MM/DD/YYYY HH:MM:SS AM/PM")
+          const outageDate = new Date(outage["Created Date"]);
+          const outageYear = outageDate.getFullYear().toString();
+
+          return outageYear === year;
+        })
+        .map((outage: PowerOutage) => ({
+          type: "Feature",
+          geometry: {
+            type: "Point",
+            coordinates: [
+              parseFloat(outage.Longitude),
+              parseFloat(outage.Latitude),
+            ],
+          },
+          properties: {
+            incidents: 1,
+            created_date: outage["Created Date"],
+            address: outage["Incident Address"],
+            borough: outage.Borough,
+          },
+        })),
+    };
+    return geojsonData;
+  };
+
+  // Update the heatmap when year changes
+  useEffect(() => {
+    if (mapRef.current?.getSource("power-outages")) {
+      getPowerOutageData(selectedYear).then((data) => {
+        (
+          mapRef.current?.getSource("power-outages") as mapboxgl.GeoJSONSource
+        )?.setData(data);
+      });
+    }
+  }, [selectedYear]);
 
   useEffect(() => {
     mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!;
-
-    const getPowerOutageData = async () => {
-      // Transform the data into GeoJSON format
-      const geojsonData: GeoJSON.FeatureCollection = {
-        type: "FeatureCollection",
-        features: powerOutages
-          .filter((outage: PowerOutage) => outage.Latitude && outage.Longitude)
-          .map((outage: PowerOutage) => ({
-            type: "Feature",
-            geometry: {
-              type: "Point",
-              coordinates: [
-                parseFloat(outage.Longitude),
-                parseFloat(outage.Latitude),
-              ],
-            },
-            properties: {
-              incidents: 1,
-              created_date: outage["Created Date"],
-              address: outage["Incident Address"],
-              borough: outage.Borough,
-            },
-          })),
-      };
-      return geojsonData;
-    };
 
     const initializeMap = async () => {
       if (!mapContainerRef.current) return;
@@ -226,7 +260,7 @@ export default function Home() {
       mapRef.current.on("load", async () => {
         try {
           // Add power outage heatmap layer
-          const outageData = await getPowerOutageData();
+          const outageData = await getPowerOutageData(selectedYear);
           mapRef.current?.addSource("power-outages", {
             type: "geojson",
             data: outageData,
@@ -322,7 +356,7 @@ export default function Home() {
   }, []);
 
   // Add layer toggle controls
-  const [showHeatmap, setShowHeatmap] = useState(true);
+  // const [showHeatmap, setShowHeatmap] = useState(true);
 
   useEffect(() => {
     if (mapRef.current) {
@@ -339,18 +373,39 @@ export default function Home() {
 
   return (
     <div>
-      <div className="absolute top-4 right-4 z-10 bg-white rounded-lg shadow-md p-2">
-        <label className="flex items-center space-x-2 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={showHeatmap}
-            onChange={(e) => setShowHeatmap(e.target.checked)}
-            className="form-checkbox h-4 w-4 text-blue-600"
-          />
-          <span className="text-sm font-medium text-gray-700">
-            Show Power Outages
-          </span>
-        </label>
+      <div className="absolute top-4 right-4 z-10 bg-white rounded-lg shadow-md p-2 space-y-2">
+        <div className="flex items-center justify-between space-x-4">
+          <label className="flex items-center space-x-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={showHeatmap}
+              onChange={(e) => setShowHeatmap(e.target.checked)}
+              className="form-checkbox h-4 w-4 text-blue-600"
+            />
+            <span className="text-sm font-medium text-gray-700">
+              Show Power Outages
+            </span>
+          </label>
+          <select
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(e.target.value)}
+            className="form-select text-sm text-black border border-gray-300 rounded-md px-2 py-1"
+            disabled={!showHeatmap}
+          >
+            <option value="all">All Years</option>
+            {availableYears.map((year) => (
+              <option key={year} value={year}>
+                {year}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="text-xs text-gray-500 italic">
+          {showHeatmap &&
+            `Showing outages from ${
+              selectedYear === "all" ? "all years" : selectedYear
+            }`}
+        </div>
       </div>
       <div ref={mapContainerRef} className="w-full h-[100vh]" />
       <AnimatePresence mode="wait">
