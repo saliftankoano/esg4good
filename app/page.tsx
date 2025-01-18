@@ -291,6 +291,12 @@ function SideBar({
     }
   };
 
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return 'text-emerald-600'; // Using emerald instead of green to be distinct
+    if (score >= 60) return 'text-amber-600'; // Yellow/Gold for medium scores
+    return 'text-orange-600'; // Orange for low scores (distinct from red status)
+  };
+
   return (
     <>
       <div className='absolute top-0 left-0 w-[400px] h-[100vh] bg-white shadow-lg overflow-y-auto z-50'>
@@ -339,19 +345,20 @@ function SideBar({
           </div>
 
           {/* ESG Impact Score */}
-          <div className='bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 p-6 rounded-xl border border-gray-100 shadow-sm'>
-            {/* Header */}
+          <div className='bg-gradient-to-br from-purple-50 via-yellow-50 to-yellow-50 p-6 rounded-xl border border-gray-100 shadow-sm'>
             <div className='flex justify-between items-center mb-6'>
               <div>
                 <h2 className='text-lg font-semibold text-gray-900'>
-                  ESG Impact Score
+                  Impact Score
                 </h2>
                 <p className='text-sm text-gray-500 mt-1'>
-                  Environmental, Social & Governance
+                  Environmental & Social Impact
                 </p>
               </div>
               <div className='flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-sm'>
-                <span className='text-3xl font-bold text-indigo-600'>85</span>
+                <span className={`text-3xl font-bold ${getScoreColor(85)}`}>
+                  85
+                </span>
                 <div className='flex flex-col text-xs text-gray-500 leading-tight'>
                   <span>OVERALL</span>
                   <span>SCORE</span>
@@ -359,34 +366,33 @@ function SideBar({
               </div>
             </div>
 
-            {/* Score Bars */}
             <div className='grid grid-cols-1 gap-6 mb-6'>
               {/* Environmental Score */}
               <div className='space-y-2'>
                 <div className='flex items-center gap-3 mb-1'>
-                  <i className='fas fa-leaf text-green-500 text-lg'></i>
+                  <i className='fas fa-leaf text-yellow-600 text-lg'></i>
                   <div className='flex justify-between items-center flex-1'>
                     <span className='text-sm font-medium text-gray-600'>
                       Environmental
                     </span>
-                    <span className='text-sm font-semibold text-green-600'>
+                    <span className='text-sm font-semibold text-yellow-600'>
                       92
                     </span>
                   </div>
                 </div>
                 <div className='h-2 bg-gray-200 rounded-full overflow-hidden'>
                   <div
-                    className='h-full bg-green-500 rounded-full'
+                    className='h-full bg-yellow-500 rounded-full'
                     style={{ width: '92%' }}
                   ></div>
                 </div>
                 <div className='flex gap-3 text-xs text-gray-500 pl-7'>
                   <div className='flex items-center gap-1'>
-                    <i className='fas fa-check text-green-500'></i>
+                    <i className='fas fa-check text-yellow-500'></i>
                     <span>Carbon Reduction</span>
                   </div>
                   <div className='flex items-center gap-1'>
-                    <i className='fas fa-check text-green-500'></i>
+                    <i className='fas fa-check text-yellow-500'></i>
                     <span>Renewable Energy</span>
                   </div>
                 </div>
@@ -395,61 +401,30 @@ function SideBar({
               {/* Social Score */}
               <div className='space-y-2'>
                 <div className='flex items-center gap-3 mb-1'>
-                  <i className='fas fa-users text-blue-500 text-lg'></i>
+                  <i className='fas fa-users text-purple-600 text-lg'></i>
                   <div className='flex justify-between items-center flex-1'>
                     <span className='text-sm font-medium text-gray-600'>
                       Social
                     </span>
-                    <span className='text-sm font-semibold text-blue-600'>
+                    <span className='text-sm font-semibold text-purple-600'>
                       78
                     </span>
                   </div>
                 </div>
                 <div className='h-2 bg-gray-200 rounded-full overflow-hidden'>
                   <div
-                    className='h-full bg-blue-500 rounded-full'
+                    className='h-full bg-purple-500 rounded-full'
                     style={{ width: '78%' }}
                   ></div>
                 </div>
                 <div className='flex gap-3 text-xs text-gray-500 pl-7'>
                   <div className='flex items-center gap-1'>
-                    <i className='fas fa-check text-blue-500'></i>
+                    <i className='fas fa-check text-purple-500'></i>
                     <span>Community Impact</span>
                   </div>
                   <div className='flex items-center gap-1'>
-                    <i className='fas fa-check text-blue-500'></i>
+                    <i className='fas fa-check text-purple-500'></i>
                     <span>Job Creation</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Governance Score */}
-              <div className='space-y-2'>
-                <div className='flex items-center gap-3 mb-1'>
-                  <i className='fas fa-building text-purple-500 text-lg'></i>
-                  <div className='flex justify-between items-center flex-1'>
-                    <span className='text-sm font-medium text-gray-600'>
-                      Governance
-                    </span>
-                    <span className='text-sm font-semibold text-purple-600'>
-                      86
-                    </span>
-                  </div>
-                </div>
-                <div className='h-2 bg-gray-200 rounded-full overflow-hidden'>
-                  <div
-                    className='h-full bg-purple-500 rounded-full'
-                    style={{ width: '86%' }}
-                  ></div>
-                </div>
-                <div className='flex gap-3 text-xs text-gray-500 pl-7'>
-                  <div className='flex items-center gap-1'>
-                    <i className='fas fa-check text-purple-500'></i>
-                    <span>Compliance</span>
-                  </div>
-                  <div className='flex items-center gap-1'>
-                    <i className='fas fa-check text-purple-500'></i>
-                    <span>Transparency</span>
                   </div>
                 </div>
               </div>
@@ -458,8 +433,8 @@ function SideBar({
             {/* Impact Metrics */}
             <div className='grid grid-cols-3 gap-4 pt-4 border-t border-gray-100'>
               <div className='text-center'>
-                <div className='flex items-center justify-center w-10 h-10 mx-auto mb-2 rounded-full bg-green-100'>
-                  <i className='fas fa-cloud text-green-600'></i>
+                <div className='flex items-center justify-center w-10 h-10 mx-auto mb-2 rounded-full bg-yellow-100'>
+                  <i className='fas fa-cloud text-yellow-600'></i>
                 </div>
                 <div className='text-sm font-medium text-gray-500'>
                   CO₂ Reduction
@@ -471,8 +446,8 @@ function SideBar({
                 </div>
               </div>
               <div className='text-center'>
-                <div className='flex items-center justify-center w-10 h-10 mx-auto mb-2 rounded-full bg-blue-100'>
-                  <i className='fas fa-briefcase text-blue-600'></i>
+                <div className='flex items-center justify-center w-10 h-10 mx-auto mb-2 rounded-full bg-purple-100'>
+                  <i className='fas fa-briefcase text-purple-600'></i>
                 </div>
                 <div className='text-sm font-medium text-gray-500'>
                   Jobs Created
@@ -484,8 +459,8 @@ function SideBar({
                 </div>
               </div>
               <div className='text-center'>
-                <div className='flex items-center justify-center w-10 h-10 mx-auto mb-2 rounded-full bg-purple-100'>
-                  <i className='fas fa-home text-purple-600'></i>
+                <div className='flex items-center justify-center w-10 h-10 mx-auto mb-2 rounded-full bg-yellow-100'>
+                  <i className='fas fa-home text-yellow-600'></i>
                 </div>
                 <div className='text-sm font-medium text-gray-500'>
                   Homes Powered
