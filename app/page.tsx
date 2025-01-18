@@ -165,6 +165,7 @@ export default function Home() {
       mapRef.current = new mapboxgl.Map({
         style: 'mapbox://styles/tanksalif/cm1c4amlx00o301qkd5racncv',
         container: mapContainerRef.current,
+
         bounds: [
           [-79.7624, 40.4773],
           [-71.7517, 45.0153],
@@ -174,8 +175,6 @@ export default function Home() {
           maxZoom: 8,
         },
       });
-
-      mapRef.current.addControl(new mapboxgl.FullscreenControl());
 
       // Add click handler to map to close sidebar
       mapRef.current.on('click', (e) => {
@@ -211,6 +210,9 @@ export default function Home() {
                 })
                   .setLngLat([lng, lat])
                   .addTo(mapRef.current!);
+
+                // Add pointer cursor to marker
+                marker.getElement().style.cursor = 'pointer';
 
                 marker.getElement().addEventListener('click', () => {
                   setSelectedProject(project);
