@@ -13,6 +13,7 @@
     "mapbox": "^1.0.0-beta10",
     "mapbox-gl": "^3.9.3",
     "mapbox-gl-fontawesome-markers": "^0.0.2",
+    "motion": "^11.18.1",
     "next": "15.1.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

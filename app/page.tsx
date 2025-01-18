@@ -5,6 +5,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { getProjects } from '@/app/actions/projects';
 import FontawesomeMarker from 'mapbox-gl-fontawesome-markers';
 import Image from 'next/image';
+import { motion, AnimatePresence } from 'framer-motion';
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!;
 
 export interface Project {
@@ -236,12 +237,15 @@ export default function Home() {
   return (
     <div>
       <div ref={mapContainerRef} className='w-full h-[100vh]' />
-      {selectedProject && (
-        <SideBar
-          project={selectedProject}
-          onClose={() => setSelectedProject(undefined)}
-        />
-      )}
+      <AnimatePresence mode='wait'>
+        {selectedProject && (
+          <SideBar
+            key='sidebar'
+            project={selectedProject}
+            onClose={() => setSelectedProject(undefined)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -300,360 +304,451 @@ function SideBar({
   };
 
   return (
-    <>
-      <div className='absolute top-0 left-0 w-[400px] h-[100vh] bg-white shadow-lg overflow-y-auto z-50'>
-        {/* Status indicator bar */}
-        <div
-          className={`absolute top-0 left-0 w-2 h-full ${getStatusColor(
-            project.project_status
-          )}`}
+    <motion.div
+      initial={{ x: -400, opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      exit={{ x: -400, opacity: 0 }}
+      transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+      className='absolute top-0 left-0 w-[400px] h-[100vh] bg-white shadow-lg overflow-y-auto z-50'
+    >
+      {/* Status indicator bar */}
+      <motion.div
+        initial={{ scaleY: 0 }}
+        animate={{ scaleY: 1 }}
+        transition={{ delay: 0.2 }}
+        className={`absolute top-0 left-0 w-2 h-full ${getStatusColor(
+          project.project_status
+        )}`}
+      />
+
+      {/* Header with close button */}
+      <div className='relative w-full h-48'>
+        <Image
+          src='https://placehold.co/600x400'
+          alt={project.project_name}
+          className='object-cover w-full h-full'
+          width={600}
+          height={400}
         />
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className='absolute top-4 right-4 w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center hover:bg-gray-100'
+          onClick={onClose}
+        >
+          <i className='fas fa-xmark text-gray-600'></i>
+        </motion.button>
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className='absolute bottom-4 left-4 bg-black bg-opacity-50 text-white px-3 py-1 rounded'
+        >
+          {project.project_status}
+        </motion.div>
+      </div>
 
-        {/* Header with close button */}
-        <div className='relative w-full h-48'>
-          <Image
-            src='https://placehold.co/600x400'
-            alt={project.project_name}
-            className='object-cover w-full h-full'
-            width={600}
-            height={400}
-          />
-          <button
-            className='absolute top-4 right-4 w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center hover:bg-gray-100'
-            onClick={onClose}
-          >
-            <i className='fas fa-xmark text-gray-600'></i>
-          </button>
-          <div className='absolute bottom-4 left-4 bg-black bg-opacity-50 text-white px-3 py-1 rounded'>
-            {project.project_status}
+      {/* Main Content */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+        className='p-6 space-y-6'
+      >
+        {/* Project Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+        >
+          <h1 className='text-2xl font-semibold text-gray-900 mb-1'>
+            {displayValue(project.project_name)}
+          </h1>
+          <div className='flex gap-2 text-sm text-gray-600'>
+            <motion.span
+              whileHover={{ scale: 1.05 }}
+              className='px-2 py-1 bg-gray-100 rounded'
+            >
+              {displayValue(project.renewable_technology)}
+            </motion.span>
+            <motion.span
+              whileHover={{ scale: 1.05 }}
+              className='px-2 py-1 bg-gray-100 rounded'
+            >
+              NYISO: {displayValue(project.nyiso_zone)}
+            </motion.span>
           </div>
-        </div>
+        </motion.div>
 
-        {/* Main Content */}
-        <div className='p-6 space-y-6'>
-          {/* Project Header */}
-          <div>
-            <h1 className='text-2xl font-semibold text-gray-900 mb-1'>
-              {displayValue(project.project_name)}
-            </h1>
-            <div className='flex gap-2 text-sm text-gray-600'>
-              <span className='px-2 py-1 bg-gray-100 rounded'>
-                {displayValue(project.renewable_technology)}
-              </span>
-              <span className='px-2 py-1 bg-gray-100 rounded'>
-                NYISO: {displayValue(project.nyiso_zone)}
-              </span>
-            </div>
-          </div>
-
-          {/* ESG Impact Score */}
-          <div className='bg-gradient-to-br from-purple-50 via-yellow-50 to-yellow-50 p-6 rounded-xl border border-gray-100 shadow-sm'>
-            <div className='flex justify-between items-center mb-6'>
-              <div>
-                <h2 className='text-lg font-semibold text-gray-900'>
-                  Impact Score
-                </h2>
-                <p className='text-sm text-gray-500 mt-1'>
-                  Environmental & Social Impact
-                </p>
-              </div>
-              <div className='flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-sm'>
-                <span className={`text-3xl font-bold ${getScoreColor(85)}`}>
-                  85
-                </span>
-                <div className='flex flex-col text-xs text-gray-500 leading-tight'>
-                  <span>OVERALL</span>
-                  <span>SCORE</span>
-                </div>
-              </div>
-            </div>
-
-            <div className='grid grid-cols-1 gap-6 mb-6'>
-              {/* Environmental Score */}
-              <div className='space-y-2'>
-                <div className='flex items-center gap-3 mb-1'>
-                  <i className='fas fa-leaf text-yellow-600 text-lg'></i>
-                  <div className='flex justify-between items-center flex-1'>
-                    <span className='text-sm font-medium text-gray-600'>
-                      Environmental
-                    </span>
-                    <span className='text-sm font-semibold text-yellow-600'>
-                      92
-                    </span>
-                  </div>
-                </div>
-                <div className='h-2 bg-gray-200 rounded-full overflow-hidden'>
-                  <div
-                    className='h-full bg-yellow-500 rounded-full'
-                    style={{ width: '92%' }}
-                  ></div>
-                </div>
-                <div className='flex gap-3 text-xs text-gray-500 pl-7'>
-                  <div className='flex items-center gap-1'>
-                    <i className='fas fa-check text-yellow-500'></i>
-                    <span>Carbon Reduction</span>
-                  </div>
-                  <div className='flex items-center gap-1'>
-                    <i className='fas fa-check text-yellow-500'></i>
-                    <span>Renewable Energy</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Social Score */}
-              <div className='space-y-2'>
-                <div className='flex items-center gap-3 mb-1'>
-                  <i className='fas fa-users text-purple-600 text-lg'></i>
-                  <div className='flex justify-between items-center flex-1'>
-                    <span className='text-sm font-medium text-gray-600'>
-                      Social
-                    </span>
-                    <span className='text-sm font-semibold text-purple-600'>
-                      78
-                    </span>
-                  </div>
-                </div>
-                <div className='h-2 bg-gray-200 rounded-full overflow-hidden'>
-                  <div
-                    className='h-full bg-purple-500 rounded-full'
-                    style={{ width: '78%' }}
-                  ></div>
-                </div>
-                <div className='flex gap-3 text-xs text-gray-500 pl-7'>
-                  <div className='flex items-center gap-1'>
-                    <i className='fas fa-check text-purple-500'></i>
-                    <span>Community Impact</span>
-                  </div>
-                  <div className='flex items-center gap-1'>
-                    <i className='fas fa-check text-purple-500'></i>
-                    <span>Job Creation</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Impact Metrics */}
-            <div className='grid grid-cols-3 gap-4 pt-4 border-t border-gray-100'>
-              <div className='text-center'>
-                <div className='flex items-center justify-center w-10 h-10 mx-auto mb-2 rounded-full bg-yellow-100'>
-                  <i className='fas fa-cloud text-yellow-600'></i>
-                </div>
-                <div className='text-sm font-medium text-gray-500'>
-                  CO₂ Reduction
-                </div>
-                <div className='text-lg font-semibold text-gray-900'>
-                  {project.bid_quantity_mwh
-                    ? `${Math.round(project.bid_quantity_mwh * 0.4)} tons`
-                    : 'N/A'}
-                </div>
-              </div>
-              <div className='text-center'>
-                <div className='flex items-center justify-center w-10 h-10 mx-auto mb-2 rounded-full bg-purple-100'>
-                  <i className='fas fa-briefcase text-purple-600'></i>
-                </div>
-                <div className='text-sm font-medium text-gray-500'>
-                  Jobs Created
-                </div>
-                <div className='text-lg font-semibold text-gray-900'>
-                  {project.new_renewable_capacity_mw
-                    ? `${Math.round(project.new_renewable_capacity_mw * 2.5)}`
-                    : 'N/A'}
-                </div>
-              </div>
-              <div className='text-center'>
-                <div className='flex items-center justify-center w-10 h-10 mx-auto mb-2 rounded-full bg-yellow-100'>
-                  <i className='fas fa-home text-yellow-600'></i>
-                </div>
-                <div className='text-sm font-medium text-gray-500'>
-                  Homes Powered
-                </div>
-                <div className='text-lg font-semibold text-gray-900'>
-                  {project.bid_quantity_mwh
-                    ? `${Math.round(
-                        project.bid_quantity_mwh * 0.12
-                      ).toLocaleString()}`
-                    : 'N/A'}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Stats */}
-          <div className='grid grid-cols-2 gap-4 bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-xl'>
+        {/* ESG Impact Score */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          whileHover={{ scale: 1.02 }}
+          className='bg-gradient-to-br from-purple-50 via-yellow-50 to-yellow-50 p-6 rounded-xl border border-gray-100 shadow-sm'
+        >
+          <div className='flex justify-between items-center mb-6'>
             <div>
-              <p className='text-sm text-gray-600'>Capacity</p>
-              <p className='text-xl font-bold text-gray-900'>
-                {formatMW(project.new_renewable_capacity_mw)}
+              <h2 className='text-lg font-semibold text-gray-900'>
+                Impact Score
+              </h2>
+              <p className='text-sm text-gray-500 mt-1'>
+                Environmental & Social Impact
+              </p>
+            </div>
+            <div className='flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-sm'>
+              <span className={`text-3xl font-bold ${getScoreColor(85)}`}>
+                85
+              </span>
+              <div className='flex flex-col text-xs text-gray-500 leading-tight'>
+                <span>OVERALL</span>
+                <span>SCORE</span>
+              </div>
+            </div>
+          </div>
+
+          <div className='grid grid-cols-1 gap-6 mb-6'>
+            {/* Environmental Score */}
+            <div className='space-y-2'>
+              <div className='flex items-center gap-3 mb-1'>
+                <i className='fas fa-leaf text-yellow-600 text-lg'></i>
+                <div className='flex justify-between items-center flex-1'>
+                  <span className='text-sm font-medium text-gray-600'>
+                    Environmental
+                  </span>
+                  <span className='text-sm font-semibold text-yellow-600'>
+                    92
+                  </span>
+                </div>
+              </div>
+              <div className='h-2 bg-gray-200 rounded-full overflow-hidden'>
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: '92%' }}
+                  transition={{ duration: 1, delay: 0.7 }}
+                  className='h-full bg-yellow-500 rounded-full'
+                />
+              </div>
+              <div className='flex gap-3 text-xs text-gray-500 pl-7'>
+                <div className='flex items-center gap-1'>
+                  <i className='fas fa-check text-yellow-500'></i>
+                  <span>Carbon Reduction</span>
+                </div>
+                <div className='flex items-center gap-1'>
+                  <i className='fas fa-check text-yellow-500'></i>
+                  <span>Renewable Energy</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Social Score */}
+            <div className='space-y-2'>
+              <div className='flex items-center gap-3 mb-1'>
+                <i className='fas fa-users text-purple-600 text-lg'></i>
+                <div className='flex justify-between items-center flex-1'>
+                  <span className='text-sm font-medium text-gray-600'>
+                    Social
+                  </span>
+                  <span className='text-sm font-semibold text-purple-600'>
+                    78
+                  </span>
+                </div>
+              </div>
+              <div className='h-2 bg-gray-200 rounded-full overflow-hidden'>
+                <div
+                  className='h-full bg-purple-500 rounded-full'
+                  style={{ width: '78%' }}
+                ></div>
+              </div>
+              <div className='flex gap-3 text-xs text-gray-500 pl-7'>
+                <div className='flex items-center gap-1'>
+                  <i className='fas fa-check text-purple-500'></i>
+                  <span>Community Impact</span>
+                </div>
+                <div className='flex items-center gap-1'>
+                  <i className='fas fa-check text-purple-500'></i>
+                  <span>Job Creation</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Impact Metrics */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.8 }}
+            className='grid grid-cols-3 gap-4 pt-4 border-t border-gray-100'
+          >
+            <motion.div
+              whileHover={{ y: -5 }}
+              transition={{ type: 'spring', stiffness: 300 }}
+              className='text-center'
+            >
+              <div className='flex items-center justify-center w-10 h-10 mx-auto mb-2 rounded-full bg-yellow-100'>
+                <i className='fas fa-cloud text-yellow-600'></i>
+              </div>
+              <div className='text-sm font-medium text-gray-500'>
+                CO₂ Reduction
+              </div>
+              <div className='text-lg font-semibold text-gray-900'>
+                {project.bid_quantity_mwh
+                  ? `${Math.round(project.bid_quantity_mwh * 0.4)} tons`
+                  : 'N/A'}
+              </div>
+            </motion.div>
+            <motion.div
+              whileHover={{ y: -5 }}
+              transition={{ type: 'spring', stiffness: 300 }}
+              className='text-center'
+            >
+              <div className='flex items-center justify-center w-10 h-10 mx-auto mb-2 rounded-full bg-purple-100'>
+                <i className='fas fa-briefcase text-purple-600'></i>
+              </div>
+              <div className='text-sm font-medium text-gray-500'>
+                Jobs Created
+              </div>
+              <div className='text-lg font-semibold text-gray-900'>
+                {project.new_renewable_capacity_mw
+                  ? `${Math.round(project.new_renewable_capacity_mw * 2.5)}`
+                  : 'N/A'}
+              </div>
+            </motion.div>
+            <motion.div
+              whileHover={{ y: -5 }}
+              transition={{ type: 'spring', stiffness: 300 }}
+              className='text-center'
+            >
+              <div className='flex items-center justify-center w-10 h-10 mx-auto mb-2 rounded-full bg-yellow-100'>
+                <i className='fas fa-home text-yellow-600'></i>
+              </div>
+              <div className='text-sm font-medium text-gray-500'>
+                Homes Powered
+              </div>
+              <div className='text-lg font-semibold text-gray-900'>
+                {project.bid_quantity_mwh
+                  ? `${Math.round(
+                      project.bid_quantity_mwh * 0.12
+                    ).toLocaleString()}`
+                  : 'N/A'}
+              </div>
+            </motion.div>
+          </motion.div>
+        </motion.div>
+
+        {/* Quick Stats */}
+        <motion.div
+          whileHover={{ scale: 1.02 }}
+          className='grid grid-cols-2 gap-4 bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-xl'
+        >
+          <div>
+            <p className='text-sm text-gray-600'>Capacity</p>
+            <p className='text-xl font-bold text-gray-900'>
+              {formatMW(project.new_renewable_capacity_mw)}
+            </p>
+          </div>
+          <div>
+            <p className='text-sm text-gray-600'>Annual Output</p>
+            <p className='text-xl font-bold text-gray-900'>
+              {project.bid_quantity_mwh
+                ? `${project.bid_quantity_mwh.toLocaleString()} MWh`
+                : 'N/A'}
+            </p>
+          </div>
+        </motion.div>
+
+        {/* Location & Timeline */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.9 }}
+          className='space-y-4'
+        >
+          <h2 className='text-lg font-semibold text-gray-900'>
+            Location & Timeline
+          </h2>
+          <div className='grid grid-cols-2 gap-4'>
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              className='bg-gray-50 p-4 rounded-lg'
+            >
+              <p className='text-sm text-gray-600'>Location</p>
+              <p className='font-medium text-gray-900'>
+                {displayValue(project.county_province)},{' '}
+                {displayValue(project.state_province)}
+              </p>
+              <p className='text-sm text-gray-600 mt-1'>
+                ZIP: {displayValue(project.zip_code)}
+              </p>
+              <p className='text-sm text-gray-600 mt-1'>
+                REDC: {displayValue(project.redc)}
+              </p>
+            </motion.div>
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              className='bg-gray-50 p-4 rounded-lg'
+            >
+              <p className='text-sm text-gray-600'>Timeline</p>
+              <p className='font-medium text-gray-900'>
+                Operation: {displayValue(project.year_of_commercial_operation)}
+              </p>
+              <p className='text-sm text-gray-600 mt-1'>
+                Start: {displayValue(project.year_of_delivery_start_date)}
+              </p>
+              <p className='text-sm text-gray-600 mt-1'>
+                Duration: {displayValue(project.contract_duration)} years
+              </p>
+            </motion.div>
+          </div>
+        </motion.div>
+
+        {/* Project Details */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1 }}
+          className='space-y-4'
+        >
+          <h2 className='text-lg font-semibold text-gray-900'>
+            Project Details
+          </h2>
+          <div className='bg-gray-50 p-4 rounded-lg space-y-3'>
+            <div>
+              <p className='text-sm text-gray-600'>Developer</p>
+              <p className='font-medium text-gray-900'>
+                {displayValue(project.developer_name)}
               </p>
             </div>
             <div>
-              <p className='text-sm text-gray-600'>Annual Output</p>
-              <p className='text-xl font-bold text-gray-900'>
-                {project.bid_quantity_mwh
-                  ? `${project.bid_quantity_mwh.toLocaleString()} MWh`
+              <p className='text-sm text-gray-600'>Counterparty</p>
+              <p className='font-medium text-gray-900'>
+                {displayValue(project.counterparty)}
+              </p>
+            </div>
+            <div>
+              <p className='text-sm text-gray-600'>Project Type</p>
+              <p className='font-medium text-gray-900'>
+                {displayValue(project.project_type)}
+              </p>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Capacity & Storage */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.1 }}
+          className='space-y-4'
+        >
+          <h2 className='text-lg font-semibold text-gray-900'>
+            Capacity & Storage
+          </h2>
+          <div className='grid grid-cols-2 gap-4'>
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              className='bg-gray-50 p-4 rounded-lg'
+            >
+              <p className='text-sm text-gray-600'>Renewable Capacity</p>
+              <p className='font-medium text-gray-900'>
+                {formatMW(project.new_renewable_capacity_mw)}
+              </p>
+              <p className='text-sm text-gray-600 mt-2'>Bid Capacity</p>
+              <p className='font-medium text-gray-900'>
+                {formatMW(project.bid_capacity_mw)}
+              </p>
+            </motion.div>
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              className='bg-gray-50 p-4 rounded-lg'
+            >
+              <p className='text-sm text-gray-600'>Storage Energy</p>
+              <p className='font-medium text-gray-900'>
+                {project.energy_storage_energy_capacity_mwh
+                  ? `${project.energy_storage_energy_capacity_mwh} MWh`
+                  : 'N/A'}
+              </p>
+              <p className='text-sm text-gray-600 mt-2'>Storage Power</p>
+              <p className='font-medium text-gray-900'>
+                {project.energy_storage_power_capacity_mwac
+                  ? `${project.energy_storage_power_capacity_mwac} MWac`
+                  : 'N/A'}
+              </p>
+            </motion.div>
+          </div>
+        </motion.div>
+
+        {/* Economic Benefits */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.2 }}
+          className='space-y-4'
+        >
+          <h2 className='text-lg font-semibold text-gray-900'>
+            Economic Benefits
+          </h2>
+          <div className='bg-gray-50 p-4 rounded-lg space-y-3'>
+            <div>
+              <p className='text-sm text-gray-600'>Benefits Threshold Met</p>
+              <p className='font-medium text-gray-900'>
+                {displayValue(project.project_met_economic_benefits_threshold)}
+              </p>
+            </div>
+            <div>
+              <p className='text-sm text-gray-600'>Incremental Benefits</p>
+              <p className='font-medium text-gray-900'>
+                {displayValue(project.incremental_economic_benefits_claimed)}
+              </p>
+            </div>
+            <div>
+              <p className='text-sm text-gray-600'>Fixed REC Price</p>
+              <p className='font-medium text-gray-900'>
+                {project.fixed_rec_price
+                  ? `$${project.fixed_rec_price}`
+                  : 'N/A'}
+              </p>
+            </div>
+            <div>
+              <p className='text-sm text-gray-600'>
+                Max Annual Contract Quantity
+              </p>
+              <p className='font-medium text-gray-900'>
+                {project.max_annual_contract_quantity
+                  ? `${project.max_annual_contract_quantity.toLocaleString()} MWh`
                   : 'N/A'}
               </p>
             </div>
           </div>
+        </motion.div>
 
-          {/* Location & Timeline */}
-          <div className='space-y-4'>
-            <h2 className='text-lg font-semibold text-gray-900'>
-              Location & Timeline
-            </h2>
-            <div className='grid grid-cols-2 gap-4'>
-              <div className='bg-gray-50 p-4 rounded-lg'>
-                <p className='text-sm text-gray-600'>Location</p>
-                <p className='font-medium text-gray-900'>
-                  {displayValue(project.county_province)},{' '}
-                  {displayValue(project.state_province)}
-                </p>
-                <p className='text-sm text-gray-600 mt-1'>
-                  ZIP: {displayValue(project.zip_code)}
-                </p>
-                <p className='text-sm text-gray-600 mt-1'>
-                  REDC: {displayValue(project.redc)}
-                </p>
-              </div>
-              <div className='bg-gray-50 p-4 rounded-lg'>
-                <p className='text-sm text-gray-600'>Timeline</p>
-                <p className='font-medium text-gray-900'>
-                  Operation:{' '}
-                  {displayValue(project.year_of_commercial_operation)}
-                </p>
-                <p className='text-sm text-gray-600 mt-1'>
-                  Start: {displayValue(project.year_of_delivery_start_date)}
-                </p>
-                <p className='text-sm text-gray-600 mt-1'>
-                  Duration: {displayValue(project.contract_duration)} years
-                </p>
-              </div>
+        {/* Permitting Status */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.3 }}
+          className='space-y-4'
+        >
+          <h2 className='text-lg font-semibold text-gray-900'>
+            Permitting Status
+          </h2>
+          <div className='bg-gray-50 p-4 rounded-lg space-y-3'>
+            <div>
+              <p className='text-sm text-gray-600'>Process Status</p>
+              <p className='font-medium text-gray-900'>
+                {displayValue(project.permit_process)}
+              </p>
+            </div>
+            <div>
+              <p className='text-sm text-gray-600'>Regulatory Status</p>
+              <p className='font-medium text-gray-900'>
+                {displayValue(project.regulatory_permitting)}
+              </p>
             </div>
           </div>
-
-          {/* Project Details */}
-          <div className='space-y-4'>
-            <h2 className='text-lg font-semibold text-gray-900'>
-              Project Details
-            </h2>
-            <div className='bg-gray-50 p-4 rounded-lg space-y-3'>
-              <div>
-                <p className='text-sm text-gray-600'>Developer</p>
-                <p className='font-medium text-gray-900'>
-                  {displayValue(project.developer_name)}
-                </p>
-              </div>
-              <div>
-                <p className='text-sm text-gray-600'>Counterparty</p>
-                <p className='font-medium text-gray-900'>
-                  {displayValue(project.counterparty)}
-                </p>
-              </div>
-              <div>
-                <p className='text-sm text-gray-600'>Project Type</p>
-                <p className='font-medium text-gray-900'>
-                  {displayValue(project.project_type)}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Capacity & Storage */}
-          <div className='space-y-4'>
-            <h2 className='text-lg font-semibold text-gray-900'>
-              Capacity & Storage
-            </h2>
-            <div className='grid grid-cols-2 gap-4'>
-              <div className='bg-gray-50 p-4 rounded-lg'>
-                <p className='text-sm text-gray-600'>Renewable Capacity</p>
-                <p className='font-medium text-gray-900'>
-                  {formatMW(project.new_renewable_capacity_mw)}
-                </p>
-                <p className='text-sm text-gray-600 mt-2'>Bid Capacity</p>
-                <p className='font-medium text-gray-900'>
-                  {formatMW(project.bid_capacity_mw)}
-                </p>
-              </div>
-              <div className='bg-gray-50 p-4 rounded-lg'>
-                <p className='text-sm text-gray-600'>Storage Energy</p>
-                <p className='font-medium text-gray-900'>
-                  {project.energy_storage_energy_capacity_mwh
-                    ? `${project.energy_storage_energy_capacity_mwh} MWh`
-                    : 'N/A'}
-                </p>
-                <p className='text-sm text-gray-600 mt-2'>Storage Power</p>
-                <p className='font-medium text-gray-900'>
-                  {project.energy_storage_power_capacity_mwac
-                    ? `${project.energy_storage_power_capacity_mwac} MWac`
-                    : 'N/A'}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Economic Benefits */}
-          <div className='space-y-4'>
-            <h2 className='text-lg font-semibold text-gray-900'>
-              Economic Benefits
-            </h2>
-            <div className='bg-gray-50 p-4 rounded-lg space-y-3'>
-              <div>
-                <p className='text-sm text-gray-600'>Benefits Threshold Met</p>
-                <p className='font-medium text-gray-900'>
-                  {displayValue(
-                    project.project_met_economic_benefits_threshold
-                  )}
-                </p>
-              </div>
-              <div>
-                <p className='text-sm text-gray-600'>Incremental Benefits</p>
-                <p className='font-medium text-gray-900'>
-                  {displayValue(project.incremental_economic_benefits_claimed)}
-                </p>
-              </div>
-              <div>
-                <p className='text-sm text-gray-600'>Fixed REC Price</p>
-                <p className='font-medium text-gray-900'>
-                  {project.fixed_rec_price
-                    ? `$${project.fixed_rec_price}`
-                    : 'N/A'}
-                </p>
-              </div>
-              <div>
-                <p className='text-sm text-gray-600'>
-                  Max Annual Contract Quantity
-                </p>
-                <p className='font-medium text-gray-900'>
-                  {project.max_annual_contract_quantity
-                    ? `${project.max_annual_contract_quantity.toLocaleString()} MWh`
-                    : 'N/A'}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Permitting Status */}
-          <div className='space-y-4'>
-            <h2 className='text-lg font-semibold text-gray-900'>
-              Permitting Status
-            </h2>
-            <div className='bg-gray-50 p-4 rounded-lg space-y-3'>
-              <div>
-                <p className='text-sm text-gray-600'>Process Status</p>
-                <p className='font-medium text-gray-900'>
-                  {displayValue(project.permit_process)}
-                </p>
-              </div>
-              <div>
-                <p className='text-sm text-gray-600'>Regulatory Status</p>
-                <p className='font-medium text-gray-900'>
-                  {displayValue(project.regulatory_permitting)}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </>
+        </motion.div>
+      </motion.div>
+    </motion.div>
   );
 }
