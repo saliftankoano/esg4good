@@ -8,35 +8,145 @@ import Image from 'next/image';
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!;
 
 export interface Project {
-  georeference: {
+  georeference?: {
     type: string;
     coordinates: [number, number];
   };
   project_name: string;
-  project_status: string;
+  project_status:
+    | 'Operational'
+    | 'Under Development'
+    | 'Cancelled'
+    | 'Completed';
   project_type: string;
-  redc: string;
-  zip_code: string;
-  energy_storage_energy_capacity_mwh: number;
-  energy_storage_power_capacity_mwac: number;
-  developer_name: string;
-  renewable_technology: string;
-  project_met_economic_benefits_threshold: string;
-  incremental_economic_benefits_claimed: string;
-  counterparty: string;
-  fixed_rec_price: number;
-  nyiso_zone: string;
-  county_province: string;
-  state_province: string;
-  year_of_commercial_operation: string;
-  year_of_delivery_start_date: string;
-  contract_duration: string;
-  new_renewable_capacity_mw: number;
-  bid_capacity_mw: number;
-  bid_quantity_mwh: number;
-  max_annual_contract_quantity: number;
-  permit_process: string;
-  regulatory_permitting: string;
+  redc?: string;
+  zip_code?: string;
+  energy_storage_energy_capacity_mwh?: number;
+  energy_storage_power_capacity_mwac?: number;
+  developer_name?: string;
+  renewable_technology:
+    | 'Solar'
+    | 'Land Based Wind'
+    | 'Land-based Wind'
+    | 'Offshore Wind'
+    | 'Hydroelectric'
+    | 'Biomass'
+    | 'Biogas - LFG'
+    | 'Biogas - ADG'
+    | 'Fuel Cell'
+    | 'Wind/Solar'
+    | 'Maintenance Hydroelectric'
+    | 'Maintenance Biomass'
+    | 'Existing'
+    | 'New'
+    | 'Return to Service'
+    | 'Upgrade';
+  project_met_economic_benefits_threshold?: 'Yes' | 'No';
+  incremental_economic_benefits_claimed?: 'Yes' | 'No';
+  counterparty?: string;
+  fixed_rec_price?: number;
+  nyiso_zone?: string;
+  county_province?: string;
+  state_province?: string;
+  year_of_commercial_operation?: string;
+  year_of_delivery_start_date?: string;
+  contract_duration?: string;
+  new_renewable_capacity_mw?: number;
+  bid_capacity_mw?: number;
+  bid_quantity_mwh?: number;
+  max_annual_contract_quantity?: number;
+  permit_process?: string;
+  regulatory_permitting?: string;
+  eligibility?: string;
+  solicitation_name?: string;
+  inflation_adjustment?: string;
+  index_orec_strike_price?: number;
+  generation_type?: string;
+  type_of_existing?: string;
+  ptid?: string;
+  interconnection_queue_number?: string;
+  article_vii?: string;
+  p10_annual_orec_exceedance?: number;
+  p50_generation_calculated_by_nyserda?: number;
+  transmission_capacity_hvdc?: number;
+}
+
+type MarkerConfig = {
+  icon: string;
+  color: StatusColors;
+  iconColor: string;
+};
+
+type StatusColors = '#22c55e' | '#3b82f6' | '#ef4444' | '#6b7280';
+
+const statusColors: Record<Project['project_status'], StatusColors> = {
+  Operational: '#22c55e',
+  'Under Development': '#3b82f6',
+  Cancelled: '#ef4444',
+  Completed: '#22c55e',
+};
+
+function getMarkerConfig(project: Project): MarkerConfig {
+  const defaultConfig: MarkerConfig = {
+    icon: 'fa-solid fa-question',
+    color: '#6b7280',
+    iconColor: 'white',
+  };
+
+  if (!project.renewable_technology) {
+    return defaultConfig;
+  }
+
+  const color =
+    statusColors[project.project_status as keyof typeof statusColors] ||
+    '#6b7280';
+
+  const tech = project.renewable_technology.toLowerCase();
+
+  if (tech.includes('solar')) {
+    return {
+      icon: 'fa-solid fa-sun',
+      color,
+      iconColor: 'white',
+    };
+  }
+  if (tech.includes('wind')) {
+    return {
+      icon: 'fa-solid fa-wind',
+      color,
+      iconColor: 'white',
+    };
+  }
+  if (tech.includes('hydro')) {
+    return {
+      icon: 'fa-solid fa-water',
+      color,
+      iconColor: 'white',
+    };
+  }
+  if (tech.includes('biomass')) {
+    return {
+      icon: 'fa-solid fa-tree',
+      color,
+      iconColor: 'white',
+    };
+  }
+  if (tech.includes('biogas')) {
+    return {
+      icon: 'fa-solid fa-gas-pump',
+      color,
+      iconColor: 'white',
+    };
+  }
+  if (tech.includes('fuel')) {
+    return {
+      icon: 'fa-solid fa-battery-full',
+      color,
+      iconColor: 'white',
+    };
+  }
+
+  return defaultConfig;
 }
 
 export default function Home() {
@@ -91,17 +201,17 @@ export default function Home() {
             .forEach((project: Project) => {
               if (project.georeference?.coordinates) {
                 const [lng, lat] = project.georeference.coordinates;
+                const markerConfig = getMarkerConfig(project);
 
-                // Create marker with click handler
+                // Create marker with project-specific configuration
                 const marker = new FontawesomeMarker({
-                  icon: 'fa-solid fa-house',
-                  iconColor: 'white',
-                  color: '#fa7132',
+                  icon: markerConfig.icon,
+                  iconColor: markerConfig.iconColor,
+                  color: markerConfig.color,
                 })
                   .setLngLat([lng, lat])
                   .addTo(mapRef.current!);
 
-                // Add click handler to marker element
                 marker.getElement().addEventListener('click', () => {
                   setSelectedProject(project);
                 });
@@ -142,25 +252,56 @@ function SideBar({
   onClose: () => void;
 }) {
   // Helper function to display N/A for empty values
-  const displayValue = (value: string | number | null | undefined) => {
-    if (value === '' || value === null || value === undefined) {
+  const displayValue = (value: unknown): string => {
+    if (value === null || value === undefined || value === '') {
       return 'N/A';
     }
-    return value;
+
+    if (typeof value === 'object') {
+      if (value instanceof URL) {
+        return value.toString();
+      }
+      return 'N/A';
+    }
+
+    if (typeof value === 'number' || typeof value === 'boolean') {
+      return value.toString();
+    }
+
+    return value as string;
   };
 
   // Helper function to format number with MW unit
-  const formatMW = (value: number | null | undefined) => {
-    if (value === null || value === undefined) {
-      return 'N/A';
+  const formatMW = (value: number | undefined) => {
+    return value ? `${value} MW` : 'N/A';
+  };
+
+  // Add status indicator
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Operational':
+      case 'Completed':
+        return 'bg-green-500';
+      case 'Under Development':
+        return 'bg-blue-500';
+      case 'Cancelled':
+        return 'bg-red-500';
+      default:
+        return 'bg-gray-500';
     }
-    return `${value} MW`;
   };
 
   return (
     <>
       <div className='absolute top-0 left-0 w-[400px] h-[100vh] bg-white shadow-lg overflow-y-auto z-50'>
-        {/* Header Image Section */}
+        {/* Status indicator bar */}
+        <div
+          className={`absolute top-0 left-0 w-2 h-full ${getStatusColor(
+            project.project_status
+          )}`}
+        />
+
+        {/* Header with close button */}
         <div className='relative w-full h-48'>
           <Image
             src='https://placehold.co/600x400'
@@ -175,214 +316,364 @@ function SideBar({
           >
             <i className='fas fa-xmark text-gray-600'></i>
           </button>
+          <div className='absolute bottom-4 left-4 bg-black bg-opacity-50 text-white px-3 py-1 rounded'>
+            {project.project_status}
+          </div>
         </div>
 
-        {/* Content Section */}
+        {/* Main Content */}
         <div className='p-6 space-y-6'>
-          {/* Project Title & Type */}
+          {/* Project Header */}
           <div>
             <h1 className='text-2xl font-semibold text-gray-900 mb-1'>
               {displayValue(project.project_name)}
             </h1>
-            <p className='text-sm text-gray-600'>
-              Type: {displayValue(project.project_type)}
-            </p>
-          </div>
-
-          {/* ESG Score Section */}
-          <div className='bg-gradient-to-r from-green-50 to-blue-50 p-6 rounded-xl'>
-            <h2 className='text-lg font-semibold text-gray-900 mb-4'>
-              ESG Score
-            </h2>
-            <div className='grid grid-cols-3 gap-4'>
-              <div className='text-center'>
-                <div className='text-2xl font-bold text-green-600'>85</div>
-                <p className='text-sm text-gray-600'>Environmental</p>
-              </div>
-              <div className='text-center'>
-                <div className='text-2xl font-bold text-blue-600'>78</div>
-                <p className='text-sm text-gray-600'>Social</p>
-              </div>
-              <div className='text-center'>
-                <div className='text-2xl font-bold text-purple-600'>92</div>
-                <p className='text-sm text-gray-600'>Governance</p>
-              </div>
-            </div>
-            <div className='mt-4 pt-4 border-t border-gray-200'>
-              <div className='text-center'>
-                <div className='text-3xl font-bold text-indigo-600'>85</div>
-                <p className='text-sm text-gray-600'>Overall Score</p>
-              </div>
+            <div className='flex gap-2 text-sm text-gray-600'>
+              <span className='px-2 py-1 bg-gray-100 rounded'>
+                {displayValue(project.renewable_technology)}
+              </span>
+              <span className='px-2 py-1 bg-gray-100 rounded'>
+                NYISO: {displayValue(project.nyiso_zone)}
+              </span>
             </div>
           </div>
 
-          {/* Key Stats */}
-          <div className='grid grid-cols-2 gap-4'>
-            <div className='bg-gray-50 p-4 rounded-lg'>
-              <p className='text-sm text-gray-600 mb-1'>Renewable Capacity</p>
-              <p className='text-lg font-semibold text-gray-900'>
+          {/* ESG Impact Score */}
+          <div className='bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 p-6 rounded-xl border border-gray-100 shadow-sm'>
+            {/* Header */}
+            <div className='flex justify-between items-center mb-6'>
+              <div>
+                <h2 className='text-lg font-semibold text-gray-900'>
+                  ESG Impact Score
+                </h2>
+                <p className='text-sm text-gray-500 mt-1'>
+                  Environmental, Social & Governance
+                </p>
+              </div>
+              <div className='flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-sm'>
+                <span className='text-3xl font-bold text-indigo-600'>85</span>
+                <div className='flex flex-col text-xs text-gray-500 leading-tight'>
+                  <span>OVERALL</span>
+                  <span>SCORE</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Score Bars */}
+            <div className='grid grid-cols-1 gap-6 mb-6'>
+              {/* Environmental Score */}
+              <div className='space-y-2'>
+                <div className='flex items-center gap-3 mb-1'>
+                  <i className='fas fa-leaf text-green-500 text-lg'></i>
+                  <div className='flex justify-between items-center flex-1'>
+                    <span className='text-sm font-medium text-gray-600'>
+                      Environmental
+                    </span>
+                    <span className='text-sm font-semibold text-green-600'>
+                      92
+                    </span>
+                  </div>
+                </div>
+                <div className='h-2 bg-gray-200 rounded-full overflow-hidden'>
+                  <div
+                    className='h-full bg-green-500 rounded-full'
+                    style={{ width: '92%' }}
+                  ></div>
+                </div>
+                <div className='flex gap-3 text-xs text-gray-500 pl-7'>
+                  <div className='flex items-center gap-1'>
+                    <i className='fas fa-check text-green-500'></i>
+                    <span>Carbon Reduction</span>
+                  </div>
+                  <div className='flex items-center gap-1'>
+                    <i className='fas fa-check text-green-500'></i>
+                    <span>Renewable Energy</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Social Score */}
+              <div className='space-y-2'>
+                <div className='flex items-center gap-3 mb-1'>
+                  <i className='fas fa-users text-blue-500 text-lg'></i>
+                  <div className='flex justify-between items-center flex-1'>
+                    <span className='text-sm font-medium text-gray-600'>
+                      Social
+                    </span>
+                    <span className='text-sm font-semibold text-blue-600'>
+                      78
+                    </span>
+                  </div>
+                </div>
+                <div className='h-2 bg-gray-200 rounded-full overflow-hidden'>
+                  <div
+                    className='h-full bg-blue-500 rounded-full'
+                    style={{ width: '78%' }}
+                  ></div>
+                </div>
+                <div className='flex gap-3 text-xs text-gray-500 pl-7'>
+                  <div className='flex items-center gap-1'>
+                    <i className='fas fa-check text-blue-500'></i>
+                    <span>Community Impact</span>
+                  </div>
+                  <div className='flex items-center gap-1'>
+                    <i className='fas fa-check text-blue-500'></i>
+                    <span>Job Creation</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Governance Score */}
+              <div className='space-y-2'>
+                <div className='flex items-center gap-3 mb-1'>
+                  <i className='fas fa-building text-purple-500 text-lg'></i>
+                  <div className='flex justify-between items-center flex-1'>
+                    <span className='text-sm font-medium text-gray-600'>
+                      Governance
+                    </span>
+                    <span className='text-sm font-semibold text-purple-600'>
+                      86
+                    </span>
+                  </div>
+                </div>
+                <div className='h-2 bg-gray-200 rounded-full overflow-hidden'>
+                  <div
+                    className='h-full bg-purple-500 rounded-full'
+                    style={{ width: '86%' }}
+                  ></div>
+                </div>
+                <div className='flex gap-3 text-xs text-gray-500 pl-7'>
+                  <div className='flex items-center gap-1'>
+                    <i className='fas fa-check text-purple-500'></i>
+                    <span>Compliance</span>
+                  </div>
+                  <div className='flex items-center gap-1'>
+                    <i className='fas fa-check text-purple-500'></i>
+                    <span>Transparency</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Impact Metrics */}
+            <div className='grid grid-cols-3 gap-4 pt-4 border-t border-gray-100'>
+              <div className='text-center'>
+                <div className='flex items-center justify-center w-10 h-10 mx-auto mb-2 rounded-full bg-green-100'>
+                  <i className='fas fa-cloud text-green-600'></i>
+                </div>
+                <div className='text-sm font-medium text-gray-500'>
+                  CO₂ Reduction
+                </div>
+                <div className='text-lg font-semibold text-gray-900'>
+                  {project.bid_quantity_mwh
+                    ? `${Math.round(project.bid_quantity_mwh * 0.4)} tons`
+                    : 'N/A'}
+                </div>
+              </div>
+              <div className='text-center'>
+                <div className='flex items-center justify-center w-10 h-10 mx-auto mb-2 rounded-full bg-blue-100'>
+                  <i className='fas fa-briefcase text-blue-600'></i>
+                </div>
+                <div className='text-sm font-medium text-gray-500'>
+                  Jobs Created
+                </div>
+                <div className='text-lg font-semibold text-gray-900'>
+                  {project.new_renewable_capacity_mw
+                    ? `${Math.round(project.new_renewable_capacity_mw * 2.5)}`
+                    : 'N/A'}
+                </div>
+              </div>
+              <div className='text-center'>
+                <div className='flex items-center justify-center w-10 h-10 mx-auto mb-2 rounded-full bg-purple-100'>
+                  <i className='fas fa-home text-purple-600'></i>
+                </div>
+                <div className='text-sm font-medium text-gray-500'>
+                  Homes Powered
+                </div>
+                <div className='text-lg font-semibold text-gray-900'>
+                  {project.bid_quantity_mwh
+                    ? `${Math.round(
+                        project.bid_quantity_mwh * 0.12
+                      ).toLocaleString()}`
+                    : 'N/A'}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Stats */}
+          <div className='grid grid-cols-2 gap-4 bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-xl'>
+            <div>
+              <p className='text-sm text-gray-600'>Capacity</p>
+              <p className='text-xl font-bold text-gray-900'>
                 {formatMW(project.new_renewable_capacity_mw)}
               </p>
             </div>
-            <div className='bg-gray-50 p-4 rounded-lg'>
-              <p className='text-sm text-gray-600 mb-1'>Bid Capacity</p>
-              <p className='text-lg font-semibold text-gray-900'>
-                {formatMW(project.bid_capacity_mw)}
+            <div>
+              <p className='text-sm text-gray-600'>Annual Output</p>
+              <p className='text-xl font-bold text-gray-900'>
+                {project.bid_quantity_mwh
+                  ? `${project.bid_quantity_mwh.toLocaleString()} MWh`
+                  : 'N/A'}
               </p>
+            </div>
+          </div>
+
+          {/* Location & Timeline */}
+          <div className='space-y-4'>
+            <h2 className='text-lg font-semibold text-gray-900'>
+              Location & Timeline
+            </h2>
+            <div className='grid grid-cols-2 gap-4'>
+              <div className='bg-gray-50 p-4 rounded-lg'>
+                <p className='text-sm text-gray-600'>Location</p>
+                <p className='font-medium text-gray-900'>
+                  {displayValue(project.county_province)},{' '}
+                  {displayValue(project.state_province)}
+                </p>
+                <p className='text-sm text-gray-600 mt-1'>
+                  ZIP: {displayValue(project.zip_code)}
+                </p>
+                <p className='text-sm text-gray-600 mt-1'>
+                  REDC: {displayValue(project.redc)}
+                </p>
+              </div>
+              <div className='bg-gray-50 p-4 rounded-lg'>
+                <p className='text-sm text-gray-600'>Timeline</p>
+                <p className='font-medium text-gray-900'>
+                  Operation:{' '}
+                  {displayValue(project.year_of_commercial_operation)}
+                </p>
+                <p className='text-sm text-gray-600 mt-1'>
+                  Start: {displayValue(project.year_of_delivery_start_date)}
+                </p>
+                <p className='text-sm text-gray-600 mt-1'>
+                  Duration: {displayValue(project.contract_duration)} years
+                </p>
+              </div>
             </div>
           </div>
 
           {/* Project Details */}
           <div className='space-y-4'>
-            <div className='flex items-center space-x-4 text-gray-700'>
-              <i className='fas fa-building w-6'></i>
+            <h2 className='text-lg font-semibold text-gray-900'>
+              Project Details
+            </h2>
+            <div className='bg-gray-50 p-4 rounded-lg space-y-3'>
               <div>
-                <p className='font-medium'>Developer</p>
-                <p className='text-sm text-gray-600'>
+                <p className='text-sm text-gray-600'>Developer</p>
+                <p className='font-medium text-gray-900'>
                   {displayValue(project.developer_name)}
                 </p>
               </div>
-            </div>
-
-            <div className='flex items-center space-x-4 text-gray-700'>
-              <i className='fas fa-map-marker-alt w-6'></i>
               <div>
-                <p className='font-medium'>Location</p>
-                <p className='text-sm text-gray-600'>
-                  {displayValue(project.county_province)},{' '}
-                  {displayValue(project.state_province)}{' '}
-                  {displayValue(project.zip_code)}
+                <p className='text-sm text-gray-600'>Counterparty</p>
+                <p className='font-medium text-gray-900'>
+                  {displayValue(project.counterparty)}
                 </p>
               </div>
-            </div>
-
-            <div className='flex items-center space-x-4 text-gray-700'>
-              <i className='fas fa-calendar w-6'></i>
               <div>
-                <p className='font-medium'>Timeline</p>
-                <p className='text-sm text-gray-600'>
-                  Operation:{' '}
-                  {displayValue(project.year_of_commercial_operation)}
-                  <br />
-                  Delivery Start:{' '}
-                  {displayValue(project.year_of_delivery_start_date)}
+                <p className='text-sm text-gray-600'>Project Type</p>
+                <p className='font-medium text-gray-900'>
+                  {displayValue(project.project_type)}
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Technology Details */}
-          <div className='border-t pt-6'>
-            <h2 className='text-lg font-semibold text-gray-900 mb-4'>
-              Technology Details
+          {/* Capacity & Storage */}
+          <div className='space-y-4'>
+            <h2 className='text-lg font-semibold text-gray-900'>
+              Capacity & Storage
             </h2>
-            <div className='space-y-3'>
-              <div className='flex justify-between'>
-                <span className='text-gray-600'>Renewable Type</span>
-                <span className='font-medium text-gray-900'>
-                  {displayValue(project.renewable_technology)}
-                </span>
+            <div className='grid grid-cols-2 gap-4'>
+              <div className='bg-gray-50 p-4 rounded-lg'>
+                <p className='text-sm text-gray-600'>Renewable Capacity</p>
+                <p className='font-medium text-gray-900'>
+                  {formatMW(project.new_renewable_capacity_mw)}
+                </p>
+                <p className='text-sm text-gray-600 mt-2'>Bid Capacity</p>
+                <p className='font-medium text-gray-900'>
+                  {formatMW(project.bid_capacity_mw)}
+                </p>
               </div>
-              <div className='flex justify-between'>
-                <span className='text-gray-600'>NYISO Zone</span>
-                <span className='font-medium text-gray-900'>
-                  {displayValue(project.nyiso_zone)}
-                </span>
-              </div>
-              <div className='flex justify-between'>
-                <span className='text-gray-600'>Contract Duration</span>
-                <span className='font-medium text-gray-900'>
-                  {displayValue(project.contract_duration)}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Energy Storage Details */}
-          <div className='border-t pt-6'>
-            <h2 className='text-lg font-semibold text-gray-900 mb-4'>
-              Energy Storage
-            </h2>
-            <div className='space-y-3'>
-              <div className='flex justify-between'>
-                <span className='text-gray-600'>Energy Capacity</span>
-                <span className='font-medium text-gray-900'>
+              <div className='bg-gray-50 p-4 rounded-lg'>
+                <p className='text-sm text-gray-600'>Storage Energy</p>
+                <p className='font-medium text-gray-900'>
                   {project.energy_storage_energy_capacity_mwh
                     ? `${project.energy_storage_energy_capacity_mwh} MWh`
                     : 'N/A'}
-                </span>
-              </div>
-              <div className='flex justify-between'>
-                <span className='text-gray-600'>Power Capacity</span>
-                <span className='font-medium text-gray-900'>
+                </p>
+                <p className='text-sm text-gray-600 mt-2'>Storage Power</p>
+                <p className='font-medium text-gray-900'>
                   {project.energy_storage_power_capacity_mwac
                     ? `${project.energy_storage_power_capacity_mwac} MWac`
                     : 'N/A'}
-                </span>
+                </p>
               </div>
             </div>
           </div>
 
           {/* Economic Benefits */}
-          <div className='border-t pt-6'>
-            <h2 className='text-lg font-semibold text-gray-900 mb-4'>
+          <div className='space-y-4'>
+            <h2 className='text-lg font-semibold text-gray-900'>
               Economic Benefits
             </h2>
-            <div className='space-y-3'>
-              <div className='flex justify-between'>
-                <span className='text-gray-600'>Benefits Threshold Met</span>
-                <span className='font-medium text-gray-900'>
+            <div className='bg-gray-50 p-4 rounded-lg space-y-3'>
+              <div>
+                <p className='text-sm text-gray-600'>Benefits Threshold Met</p>
+                <p className='font-medium text-gray-900'>
                   {displayValue(
                     project.project_met_economic_benefits_threshold
                   )}
-                </span>
+                </p>
               </div>
-              <div className='flex justify-between'>
-                <span className='text-gray-600'>Incremental Benefits</span>
-                <span className='font-medium text-gray-900'>
+              <div>
+                <p className='text-sm text-gray-600'>Incremental Benefits</p>
+                <p className='font-medium text-gray-900'>
                   {displayValue(project.incremental_economic_benefits_claimed)}
-                </span>
+                </p>
               </div>
-              <div className='flex justify-between'>
-                <span className='text-gray-600'>Fixed REC Price</span>
-                <span className='font-medium text-gray-900'>
+              <div>
+                <p className='text-sm text-gray-600'>Fixed REC Price</p>
+                <p className='font-medium text-gray-900'>
                   {project.fixed_rec_price
                     ? `$${project.fixed_rec_price}`
                     : 'N/A'}
-                </span>
+                </p>
+              </div>
+              <div>
+                <p className='text-sm text-gray-600'>
+                  Max Annual Contract Quantity
+                </p>
+                <p className='font-medium text-gray-900'>
+                  {project.max_annual_contract_quantity
+                    ? `${project.max_annual_contract_quantity.toLocaleString()} MWh`
+                    : 'N/A'}
+                </p>
               </div>
             </div>
           </div>
 
           {/* Permitting Status */}
-          <div className='border-t pt-6'>
-            <h2 className='text-lg font-semibold text-gray-900 mb-4'>
+          <div className='space-y-4'>
+            <h2 className='text-lg font-semibold text-gray-900'>
               Permitting Status
             </h2>
-            <div className='space-y-3'>
-              <div className='bg-gray-50 p-4 rounded-lg'>
-                <p className='text-sm text-gray-600 mb-2'>Process Status</p>
-                <p className='text-gray-900'>
+            <div className='bg-gray-50 p-4 rounded-lg space-y-3'>
+              <div>
+                <p className='text-sm text-gray-600'>Process Status</p>
+                <p className='font-medium text-gray-900'>
                   {displayValue(project.permit_process)}
                 </p>
               </div>
-              <div className='bg-gray-50 p-4 rounded-lg'>
-                <p className='text-sm text-gray-600 mb-2'>Regulatory Status</p>
-                <p className='text-gray-900'>
+              <div>
+                <p className='text-sm text-gray-600'>Regulatory Status</p>
+                <p className='font-medium text-gray-900'>
                   {displayValue(project.regulatory_permitting)}
                 </p>
               </div>
             </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className='flex space-x-4 pt-4'>
-            <button className='flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors'>
-              Contact Developer
-            </button>
-            <button className='flex-1 border border-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-50 transition-colors'>
-              View Details
-            </button>
           </div>
         </div>
       </div>
