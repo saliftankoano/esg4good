@@ -116,8 +116,9 @@ export default function Home() {
 
 function SideBar({ project }: { project: Project }) {
   return (
-    <div className='absolute top-0 left-0 w-1/4 h-[100vh] bg-gray-100'>
-      <div className='w-full h-1/4'>
+    <div className='absolute top-0 left-0 w-[400px] h-[100vh] bg-white shadow-lg'>
+      {/* Header Image Section */}
+      <div className='relative w-full h-48'>
         <Image
           src='https://placehold.co/600x400'
           alt={project.project_name}
@@ -125,31 +126,106 @@ function SideBar({ project }: { project: Project }) {
           width={600}
           height={400}
         />
+        <button
+          className='absolute top-4 right-4 w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center hover:bg-gray-100'
+          onClick={() => window.print()} // Replace with actual share functionality
+        >
+          <i className='fas fa-share-alt text-gray-600'></i>
+        </button>
       </div>
-      <div className='p-4'>
-        <h1 className='text-2xl font-bold text-black'>
-          {project.project_name}
-        </h1>
-        <p className='text-sm text-gray-500'>{project.project_type}</p>
-        <div className='flex flex-row border-y border-black gap-2 py-2'>
-          <div className='flex flex-col items-center justify-center'>
-            <div className='text-black rounded-full w-10 h-10 bg-red-500 flex items-center justify-center'>
-              <p>{project.project_status.charAt(0)}</p>
-            </div>
-            <p className='text-black'>Status</p>
+
+      {/* Content Section */}
+      <div className='p-6 space-y-6'>
+        {/* Project Title & Type */}
+        <div>
+          <h1 className='text-2xl font-semibold text-gray-900 mb-1'>
+            {project.project_name}
+          </h1>
+          <p className='text-sm text-gray-600'>{project.project_type}</p>
+        </div>
+
+        {/* Key Stats */}
+        <div className='grid grid-cols-2 gap-4'>
+          <div className='bg-gray-50 p-4 rounded-lg'>
+            <p className='text-sm text-gray-600 mb-1'>Capacity</p>
+            <p className='text-lg font-semibold text-gray-900'>
+              {project.new_renewable_capacity_mw} MW
+            </p>
           </div>
-          <div className='flex flex-col items-center justify-center'>
-            <div className='text-black rounded-full w-10 h-10 bg-green-500 flex items-center justify-center'>
-              <p>{project.renewable_technology.charAt(0)}</p>
-            </div>
-            <p className='text-black'>Type</p>
+          <div className='bg-gray-50 p-4 rounded-lg'>
+            <p className='text-sm text-gray-600 mb-1'>Status</p>
+            <p className='text-lg font-semibold text-gray-900'>
+              {project.project_status}
+            </p>
           </div>
-          <div className='flex flex-col items-center justify-center'>
-            <div className='text-black rounded-full w-10 h-10 bg-blue-500 flex items-center justify-center'>
-              <p>{project.redc.charAt(0)}</p>
+        </div>
+
+        {/* Project Details */}
+        <div className='space-y-4'>
+          <div className='flex items-center space-x-4 text-gray-700'>
+            <i className='fas fa-building w-6'></i>
+            <div>
+              <p className='font-medium'>Developer</p>
+              <p className='text-sm text-gray-600'>{project.developer_name}</p>
             </div>
-            <p className='text-black'>Region</p>
           </div>
+
+          <div className='flex items-center space-x-4 text-gray-700'>
+            <i className='fas fa-map-marker-alt w-6'></i>
+            <div>
+              <p className='font-medium'>Location</p>
+              <p className='text-sm text-gray-600'>
+                {project.county_province}, {project.state_province}
+              </p>
+            </div>
+          </div>
+
+          <div className='flex items-center space-x-4 text-gray-700'>
+            <i className='fas fa-calendar w-6'></i>
+            <div>
+              <p className='font-medium'>Commercial Operation</p>
+              <p className='text-sm text-gray-600'>
+                {project.year_of_commercial_operation}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Technology Details */}
+        <div className='border-t pt-6'>
+          <h2 className='text-lg font-semibold text-gray-900 mb-4'>
+            Technology Details
+          </h2>
+          <div className='space-y-3'>
+            <div className='flex justify-between'>
+              <span className='text-gray-600'>Renewable Type</span>
+              <span className='font-medium text-gray-900'>
+                {project.renewable_technology}
+              </span>
+            </div>
+            <div className='flex justify-between'>
+              <span className='text-gray-600'>NYISO Zone</span>
+              <span className='font-medium text-gray-900'>
+                {project.nyiso_zone}
+              </span>
+            </div>
+            <div className='flex justify-between'>
+              <span className='text-gray-600'>Contract Duration</span>
+              <span className='font-medium text-gray-900'>
+                {project.contract_duration}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className='flex space-x-4 pt-4'>
+          <button className='flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors'>
+            Contact Developer
+          </button>
+          <button className='flex-1 border border-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-50 transition-colors'>
+            View Details
+          </button>
         </div>
       </div>
     </div>
