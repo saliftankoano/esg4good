@@ -115,8 +115,24 @@ export default function Home() {
 }
 
 function SideBar({ project }: { project: Project }) {
+  // Helper function to display N/A for empty values
+  const displayValue = (value: string | number | null | undefined) => {
+    if (value === '' || value === null || value === undefined) {
+      return 'N/A';
+    }
+    return value;
+  };
+
+  // Helper function to format number with MW unit
+  const formatMW = (value: number | null | undefined) => {
+    if (value === null || value === undefined) {
+      return 'N/A';
+    }
+    return `${value} MW`;
+  };
+
   return (
-    <div className='absolute top-0 left-0 w-[400px] h-[100vh] bg-white shadow-lg'>
+    <div className='absolute top-0 left-0 w-[400px] h-[100vh] bg-white shadow-lg overflow-y-auto z-50'>
       {/* Header Image Section */}
       <div className='relative w-full h-48'>
         <Image
@@ -128,7 +144,7 @@ function SideBar({ project }: { project: Project }) {
         />
         <button
           className='absolute top-4 right-4 w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center hover:bg-gray-100'
-          onClick={() => window.print()} // Replace with actual share functionality
+          onClick={() => window.print()}
         >
           <i className='fas fa-share-alt text-gray-600'></i>
         </button>
@@ -139,23 +155,52 @@ function SideBar({ project }: { project: Project }) {
         {/* Project Title & Type */}
         <div>
           <h1 className='text-2xl font-semibold text-gray-900 mb-1'>
-            {project.project_name}
+            {displayValue(project.project_name)}
           </h1>
-          <p className='text-sm text-gray-600'>{project.project_type}</p>
+          <p className='text-sm text-gray-600'>
+            Type: {displayValue(project.project_type)}
+          </p>
+        </div>
+
+        {/* ESG Score Section */}
+        <div className='bg-gradient-to-r from-green-50 to-blue-50 p-6 rounded-xl'>
+          <h2 className='text-lg font-semibold text-gray-900 mb-4'>
+            ESG Score
+          </h2>
+          <div className='grid grid-cols-3 gap-4'>
+            <div className='text-center'>
+              <div className='text-2xl font-bold text-green-600'>85</div>
+              <p className='text-sm text-gray-600'>Environmental</p>
+            </div>
+            <div className='text-center'>
+              <div className='text-2xl font-bold text-blue-600'>78</div>
+              <p className='text-sm text-gray-600'>Social</p>
+            </div>
+            <div className='text-center'>
+              <div className='text-2xl font-bold text-purple-600'>92</div>
+              <p className='text-sm text-gray-600'>Governance</p>
+            </div>
+          </div>
+          <div className='mt-4 pt-4 border-t border-gray-200'>
+            <div className='text-center'>
+              <div className='text-3xl font-bold text-indigo-600'>85</div>
+              <p className='text-sm text-gray-600'>Overall Score</p>
+            </div>
+          </div>
         </div>
 
         {/* Key Stats */}
         <div className='grid grid-cols-2 gap-4'>
           <div className='bg-gray-50 p-4 rounded-lg'>
-            <p className='text-sm text-gray-600 mb-1'>Capacity</p>
+            <p className='text-sm text-gray-600 mb-1'>Renewable Capacity</p>
             <p className='text-lg font-semibold text-gray-900'>
-              {project.new_renewable_capacity_mw} MW
+              {formatMW(project.new_renewable_capacity_mw)}
             </p>
           </div>
           <div className='bg-gray-50 p-4 rounded-lg'>
-            <p className='text-sm text-gray-600 mb-1'>Status</p>
+            <p className='text-sm text-gray-600 mb-1'>Bid Capacity</p>
             <p className='text-lg font-semibold text-gray-900'>
-              {project.project_status}
+              {formatMW(project.bid_capacity_mw)}
             </p>
           </div>
         </div>
@@ -166,7 +211,9 @@ function SideBar({ project }: { project: Project }) {
             <i className='fas fa-building w-6'></i>
             <div>
               <p className='font-medium'>Developer</p>
-              <p className='text-sm text-gray-600'>{project.developer_name}</p>
+              <p className='text-sm text-gray-600'>
+                {displayValue(project.developer_name)}
+              </p>
             </div>
           </div>
 
@@ -175,7 +222,9 @@ function SideBar({ project }: { project: Project }) {
             <div>
               <p className='font-medium'>Location</p>
               <p className='text-sm text-gray-600'>
-                {project.county_province}, {project.state_province}
+                {displayValue(project.county_province)},{' '}
+                {displayValue(project.state_province)}{' '}
+                {displayValue(project.zip_code)}
               </p>
             </div>
           </div>
@@ -183,9 +232,12 @@ function SideBar({ project }: { project: Project }) {
           <div className='flex items-center space-x-4 text-gray-700'>
             <i className='fas fa-calendar w-6'></i>
             <div>
-              <p className='font-medium'>Commercial Operation</p>
+              <p className='font-medium'>Timeline</p>
               <p className='text-sm text-gray-600'>
-                {project.year_of_commercial_operation}
+                Operation: {displayValue(project.year_of_commercial_operation)}
+                <br />
+                Delivery Start:{' '}
+                {displayValue(project.year_of_delivery_start_date)}
               </p>
             </div>
           </div>
@@ -200,20 +252,95 @@ function SideBar({ project }: { project: Project }) {
             <div className='flex justify-between'>
               <span className='text-gray-600'>Renewable Type</span>
               <span className='font-medium text-gray-900'>
-                {project.renewable_technology}
+                {displayValue(project.renewable_technology)}
               </span>
             </div>
             <div className='flex justify-between'>
               <span className='text-gray-600'>NYISO Zone</span>
               <span className='font-medium text-gray-900'>
-                {project.nyiso_zone}
+                {displayValue(project.nyiso_zone)}
               </span>
             </div>
             <div className='flex justify-between'>
               <span className='text-gray-600'>Contract Duration</span>
               <span className='font-medium text-gray-900'>
-                {project.contract_duration}
+                {displayValue(project.contract_duration)}
               </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Energy Storage Details */}
+        <div className='border-t pt-6'>
+          <h2 className='text-lg font-semibold text-gray-900 mb-4'>
+            Energy Storage
+          </h2>
+          <div className='space-y-3'>
+            <div className='flex justify-between'>
+              <span className='text-gray-600'>Energy Capacity</span>
+              <span className='font-medium text-gray-900'>
+                {project.energy_storage_energy_capacity_mwh
+                  ? `${project.energy_storage_energy_capacity_mwh} MWh`
+                  : 'N/A'}
+              </span>
+            </div>
+            <div className='flex justify-between'>
+              <span className='text-gray-600'>Power Capacity</span>
+              <span className='font-medium text-gray-900'>
+                {project.energy_storage_power_capacity_mwac
+                  ? `${project.energy_storage_power_capacity_mwac} MWac`
+                  : 'N/A'}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Economic Benefits */}
+        <div className='border-t pt-6'>
+          <h2 className='text-lg font-semibold text-gray-900 mb-4'>
+            Economic Benefits
+          </h2>
+          <div className='space-y-3'>
+            <div className='flex justify-between'>
+              <span className='text-gray-600'>Benefits Threshold Met</span>
+              <span className='font-medium text-gray-900'>
+                {displayValue(project.project_met_economic_benefits_threshold)}
+              </span>
+            </div>
+            <div className='flex justify-between'>
+              <span className='text-gray-600'>Incremental Benefits</span>
+              <span className='font-medium text-gray-900'>
+                {displayValue(project.incremental_economic_benefits_claimed)}
+              </span>
+            </div>
+            <div className='flex justify-between'>
+              <span className='text-gray-600'>Fixed REC Price</span>
+              <span className='font-medium text-gray-900'>
+                {project.fixed_rec_price
+                  ? `$${project.fixed_rec_price}`
+                  : 'N/A'}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Permitting Status */}
+        <div className='border-t pt-6'>
+          <h2 className='text-lg font-semibold text-gray-900 mb-4'>
+            Permitting Status
+          </h2>
+          <div className='space-y-3'>
+            <div className='bg-gray-50 p-4 rounded-lg'>
+              <p className='text-sm text-gray-600 mb-2'>Process Status</p>
+              <p className='text-gray-900'>
+                {displayValue(project.permit_process)}
+              </p>
+            </div>
+            <div className='bg-gray-50 p-4 rounded-lg'>
+              <p className='text-sm text-gray-600 mb-2'>Regulatory Status</p>
+              <p className='text-gray-900'>
+                {displayValue(project.regulatory_permitting)}
+              </p>
             </div>
           </div>
         </div>
