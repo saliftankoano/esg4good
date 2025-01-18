@@ -166,13 +166,13 @@ export default function Home() {
         style: 'mapbox://styles/tanksalif/cm1c4amlx00o301qkd5racncv',
         container: mapContainerRef.current,
         bounds: [
-          [-74.2709, 40.48972],
-          [-73.7042, 40.93288],
+          [-79.7624, 40.4773],
+          [-71.7517, 45.0153],
         ],
         fitBoundsOptions: {
-          padding: 15,
+          padding: 50,
+          maxZoom: 8,
         },
-        zoom: 11.5,
       });
 
       mapRef.current.addControl(new mapboxgl.FullscreenControl());
