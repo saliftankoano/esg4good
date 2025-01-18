@@ -2,18 +2,17 @@
 import { useEffect, useRef } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
-import { getRats } from "../actions/rats";
-
+import * as powerOutages from "../../datasets/power_outage_complaints_20250118.json";
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!;
 
-export interface RatSighting {
-  location: {
-    type: string;
-    coordinates: [number, number];
-  };
-  created_date: string;
-  incident_address: string;
-  borough: string;
+export interface PowerOutage {
+  "Unique Key": string;
+  "Created Date": string;
+  "Incident Address": string;
+  Borough: string;
+  Latitude: string;
+  Longitude: string;
+  Location: string;
 }
 
 export default function Home() {
@@ -23,27 +22,26 @@ export default function Home() {
   useEffect(() => {
     mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!;
 
-    const getRatsData = async () => {
-      const rats = await getRats();
+    const getPowerOutageData = async () => {
       // Transform the data into GeoJSON format
       const geojsonData: GeoJSON.FeatureCollection = {
         type: "FeatureCollection",
-        features: rats
-          .filter((rat: RatSighting) => rat?.location?.coordinates)
-          .map((rat: RatSighting) => ({
+        features: powerOutages
+          .filter((outage: PowerOutage) => outage.Latitude && outage.Longitude)
+          .map((outage: PowerOutage) => ({
             type: "Feature",
             geometry: {
               type: "Point",
               coordinates: [
-                rat.location.coordinates[0],
-                rat.location.coordinates[1],
+                parseFloat(outage.Longitude),
+                parseFloat(outage.Latitude),
               ],
             },
             properties: {
-              sightings: 1, // Each point represents one sighting
-              created_date: rat.created_date,
-              address: rat.incident_address,
-              borough: rat.borough,
+              incidents: 1, // Each point represents one incident
+              created_date: outage["Created Date"],
+              address: outage["Incident Address"],
+              borough: outage.Borough,
             },
           })),
       };
@@ -51,7 +49,7 @@ export default function Home() {
       // If map is already initialized, update the source
       if (mapRef.current) {
         const source = mapRef.current.getSource(
-          "rat-sightings"
+          "power-outages"
         ) as mapboxgl.GeoJSONSource;
         if (source) {
           source.setData(geojsonData);
@@ -65,31 +63,31 @@ export default function Home() {
       mapRef.current = new mapboxgl.Map({
         style: "mapbox://styles/tanksalif/cm1c4amlx00o301qkd5racncv",
         container: mapContainerRef.current,
-        center: [-73.989357, 40.74855],
+        center: [-73.989357, 40.74855], // NYC coordinates
         zoom: 11.5,
       });
 
       // Add the data source and layer when the map loads
       mapRef.current.on("load", async () => {
-        const geojsonData = await getRatsData();
+        const geojsonData = await getPowerOutageData();
 
-        // Add the source with your rat sightings data
-        mapRef.current?.addSource("rat-sightings", {
+        // Add the source with power outage data
+        mapRef.current?.addSource("power-outages", {
           type: "geojson",
           data: geojsonData,
         });
 
         // Add the heatmap layer
         mapRef.current?.addLayer({
-          id: "rat-heat",
+          id: "power-outage-heat",
           type: "heatmap",
-          source: "rat-sightings",
+          source: "power-outages",
           paint: {
-            // Increase weight based on number of sightings
+            // Increase weight based on number of incidents
             "heatmap-weight": [
               "interpolate",
               ["linear"],
-              ["get", "sightings"],
+              ["get", "incidents"],
               0,
               0,
               10,
@@ -105,23 +103,23 @@ export default function Home() {
               15,
               3,
             ],
-            // Color ramp for heatmap from green to red
+            // Color ramp for heatmap from blue to red
             "heatmap-color": [
               "interpolate",
               ["linear"],
               ["heatmap-density"],
               0,
-              "rgba(33,102,0,0)",
+              "rgba(0,0,255,0)",
               0.2,
-              "rgb(103,169,0)",
+              "rgb(0,0,255)",
               0.4,
-              "rgb(209,229,0)",
+              "rgb(0,255,255)",
               0.6,
-              "rgb(253,219,0)",
+              "rgb(255,255,0)",
               0.8,
-              "rgb(239,138,0)",
+              "rgb(255,128,0)",
               1,
-              "rgb(186,0,0)",
+              "rgb(255,0,0)",
             ],
             // Adjust the heatmap radius with zoom level
             "heatmap-radius": [
@@ -147,7 +145,7 @@ export default function Home() {
 
   return (
     <div>
-      <h1>Hello World</h1>
+      <h1 className="text-2xl font-bold p-4">NYC Power Outages Heatmap</h1>
       <div ref={mapContainerRef} className="w-full h-[100vh]" />
     </div>
   );

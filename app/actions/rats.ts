@@ -1,5 +1,5 @@
 "use server";
-import { RatSighting } from "@/app/rats/page";
+import { RatSighting } from "@/app/outage/page";
 
 export const getRats = async () => {
   const token = process.env.APP_TOKEN;
