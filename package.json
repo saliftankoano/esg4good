@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "lucide-react": "^0.473.0",
     "mapbox": "^1.0.0-beta10",
     "mapbox-gl": "^3.9.3",
     "mapbox-gl-fontawesome-markers": "^0.0.2",
