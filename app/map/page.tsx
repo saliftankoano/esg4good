@@ -309,7 +309,7 @@ export default function Home() {
             type: "Point",
             coordinates: [
               parseFloat(outage.longitude),
-              parseFloat(outage.latitude),
+              outage.latitude.toString(),
             ],
           },
           properties: {
