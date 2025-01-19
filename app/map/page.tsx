@@ -787,11 +787,12 @@ function SideBar({
       {/* Header with close button */}
       <div className='relative h-48 w-full'>
         <Image
-          src='https://placehold.co/600x400'
+          src={getProjectImage(project)}
           alt={project.projectName}
           className='h-full w-full object-cover'
-          width={600}
-          height={400}
+          fill
+          sizes="(max-width: 400px) 100vw"
+          priority
         />
         <motion.button
           whileHover={{ scale: 1.05 }}
@@ -1243,3 +1244,22 @@ const addEVStationMarkers = (
     }
   });
 };
+
+function getProjectImage(project: Project) {
+  const tech = project.renewableTechnology?.toLowerCase() || '';
+
+  if (tech.includes('hydro')) {
+    return '/images/hydro.jpg';
+  }
+  if (tech.includes('solar')) {
+    return '/images/solar.jpg';
+  }
+  if (tech.includes('wind')) {
+    return '/images/wind.jpg';
+  }
+  if (tech.includes('ev') || tech.includes('charger') || tech.includes('fuel cell')) {
+    return '/images/ev.avif';
+  }
+  
+  return 'https://placehold.co/600x400';
+}
