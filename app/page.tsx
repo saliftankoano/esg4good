@@ -665,7 +665,7 @@ function SideBar({
               </div>
               <div className="text-lg font-semibold text-gray-900">
                 {project.bid_quantity_mwh
-                  ? `${Math.round(project.bid_quantity_mwh * 0.4)} tons`
+                  ? `${Math.round(project.bid_quantity_mwh * 0.19)} metric tons`
                   : "N/A"}
               </div>
             </motion.div>
