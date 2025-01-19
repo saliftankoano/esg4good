@@ -255,6 +255,7 @@ export default function Home() {
   const [availableYears] = useState<string[]>(() =>
     getUniqueYears(powerOutages as PowerOutage[])
   );
+  const [showEVStations, setShowEVStations] = useState(false);
 
   const getPowerOutageData = async (year: string) => {
     // Transform the data into GeoJSON format
@@ -449,6 +450,19 @@ export default function Home() {
     }
   }, [showHeatmap]);
 
+  // Add this new useEffect to handle EV station visibility
+  useEffect(() => {
+    if (mapRef.current) {
+      const markers = document.querySelectorAll('.mapboxgl-marker');
+      markers.forEach((marker) => {
+        const element = marker as HTMLElement;
+        if (element.querySelector('.fa-charging-station')) {
+          element.style.display = showEVStations ? 'block' : 'none';
+        }
+      });
+    }
+  }, [showEVStations]);
+
   return (
     <div>
       <div className='absolute right-4 top-4 z-10 space-y-2 rounded-lg bg-white p-2 shadow-md'>
@@ -476,6 +490,19 @@ export default function Home() {
               </option>
             ))}
           </select>
+        </div>
+        <div className='border-t border-gray-200 pt-2'>
+          <label className='flex cursor-pointer items-center space-x-2'>
+            <input
+              type='checkbox'
+              checked={showEVStations}
+              onChange={(e) => setShowEVStations(e.target.checked)}
+              className='form-checkbox h-4 w-4 text-green-600'
+            />
+            <span className='text-sm font-medium text-gray-700'>
+              Show EV Stations
+            </span>
+          </label>
         </div>
         <div className='text-xs italic text-gray-500'>
           {showHeatmap &&
@@ -1177,7 +1204,7 @@ function SideBar({
 
 const addEVStationMarkers = (
   map: mapboxgl.Map,
-  setSelectedProject: (project: any) => void
+  setSelectedProject: (project: Project) => void
 ) => {
   (evStations as EVStation[]).forEach((station) => {
     if (station.latitude && station.longitude) {
@@ -1191,8 +1218,13 @@ const addEVStationMarkers = (
         .setLngLat([station.longitude, station.latitude])
         .addTo(map);
 
-      marker.getElement().style.cursor = 'pointer';
-      marker.getElement().addEventListener('click', () => {
+      // Add cursor pointer and set initial visibility
+      const element = marker.getElement();
+      element.style.cursor = 'pointer';
+      element.style.display = 'none'; // Hide markers initially
+      
+      // Add click event
+      element.addEventListener('click', () => {
         setSelectedProject({
           project_name: station.stationName,
           project_status: 'Operational',
