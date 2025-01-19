@@ -311,13 +311,10 @@ export default function Home() {
       mapRef.current = new mapboxgl.Map({
         style: 'mapbox://styles/tanksalif/cm1c4amlx00o301qkd5racncv',
         container: mapContainerRef.current,
-        bounds: [
-          [-79.7624, 40.4773],
-          [-71.7517, 45.0153],
-        ],
+        center: [-73.9919618, 40.7485519], // NYC coordinates
+        zoom: 12.5,
         fitBoundsOptions: {
           padding: 50,
-          maxZoom: 8,
         },
       });
 
