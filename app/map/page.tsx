@@ -344,6 +344,9 @@ export default function Home() {
             id: 'power-outage-heat',
             type: 'heatmap',
             source: 'power-outages',
+            layout: {
+              visibility: 'none',
+            },
             paint: {
               'heatmap-weight': [
                 'interpolate',
