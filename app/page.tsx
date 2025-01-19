@@ -7,6 +7,19 @@ import FontawesomeMarker from "mapbox-gl-fontawesome-markers";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import powerOutages from "@/datasets/power_outage_complaints_20250118.json";
+import { getProjectRecommendations } from "@/app/actions/groq";
+import {
+  Lightbulb,
+  Sparkles,
+  AlertTriangle,
+  ArrowUpRight,
+  TrendingUp,
+  CheckCircle2,
+  Target,
+  Zap,
+} from "lucide-react";
+
+import solarPart4 from "@/datasets/solar_part4.json";
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!;
 
 export interface Project {
@@ -98,12 +111,47 @@ const statusColors: Record<Project["project_status"], StatusColors> = {
   Completed: "#22c55e",
 };
 
-function getMarkerConfig(project: Project): MarkerConfig {
+// Update the SolarProject interface to match the actual JSON structure
+interface SolarProject {
+  reportingPeriod: string;
+  projectNumber: string | number;
+  city: string;
+  county: string;
+  state: string;
+  zipCode: number;
+  sector: string;
+  programType: string;
+  electricUtility: string;
+  purchaseType: string;
+  dateApplicationReceived: string;
+  dateCompleted: string | null;
+  projectStatus: string;
+  contractor: string | null;
+  primaryInverterManufacturer: string | null;
+  primaryInverterModelNumber: string | null;
+  totalInverterQuantity: number;
+  primaryPvModuleManufacturer: string | null;
+  pvModuleModelNumber: string | null;
+  totalPvModuleQuantity: number;
+  projectCost: number;
+  totalNyserdaIncentive: number;
+}
+
+function getMarkerConfig(project: Project | SolarProject): MarkerConfig {
   const defaultConfig: MarkerConfig = {
     icon: "fa-solid fa-question",
     color: "#6b7280",
     iconColor: "white",
   };
+
+  // Special case for SolarProject type
+  if ("totalPvModuleQuantity" in project) {
+    return {
+      icon: "fa-solid fa-solar-panel",
+      color: project.projectStatus === "Complete" ? "#22c55e" : "#3b82f6",
+      iconColor: "white",
+    };
+  }
 
   if (!project.renewable_technology) {
     return defaultConfig;
@@ -342,6 +390,9 @@ export default function Home() {
                 });
               }
             });
+
+          // Add solar project markers
+          await addSolarProjectMarkers(mapRef.current!, setSelectedProject);
         } catch (error) {
           console.error("Error loading data:", error);
         }
@@ -429,6 +480,27 @@ function SideBar({
   project: Project;
   onClose: () => void;
 }) {
+  const [recommendations, setRecommendations] = useState<string>("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleGetRecommendations = async () => {
+    setIsLoading(true);
+    try {
+      const result = await getProjectRecommendations(project);
+      setRecommendations(result);
+    } catch (error) {
+      console.error("Error getting recommendations:", error);
+      // Show error to user
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Failed to get recommendations. Please try again."
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Helper function to display N/A for empty values
   const displayValue = (value: unknown): string => {
     if (value === null || value === undefined || value === "") {
@@ -474,6 +546,185 @@ function SideBar({
     if (score >= 60) return "text-amber-600"; // Yellow/Gold for medium scores
     return "text-orange-600"; // Orange for low scores (distinct from red status)
   };
+
+  // Add this function to parse and format the recommendations
+  const formatRecommendations = (text: string) => {
+    const sections = {
+      strengths: [] as string[],
+      improvements: [] as string[],
+      recommendations: [] as string[],
+      impacts: [] as string[],
+    };
+
+    let currentSection = "";
+    text.split("\n").forEach((line) => {
+      if (line.includes("Current strengths")) {
+        currentSection = "strengths";
+      } else if (line.includes("Areas for improvement")) {
+        currentSection = "improvements";
+      } else if (line.includes("Specific actionable recommendations")) {
+        currentSection = "recommendations";
+      } else if (line.includes("Potential score impact")) {
+        currentSection = "impacts";
+      } else if (
+        line.trim().startsWith("- ") ||
+        line.trim().startsWith("• ") ||
+        /^\d+\./.test(line.trim())
+      ) {
+        if (currentSection && line.trim()) {
+          sections[currentSection as keyof typeof sections].push(
+            line.trim().replace(/^[-•\d.]\s*/, "")
+          );
+        }
+      }
+    });
+
+    return sections;
+  };
+
+  // Replace the recommendationsButton with this section
+  const recommendationsSection = (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 1.4 }}
+      className="space-y-4"
+    >
+      <div className="flex justify-between items-center">
+        <h2 className="text-lg font-semibold text-gray-900">
+          Project Recommendations
+        </h2>
+        {!recommendations && (
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleGetRecommendations}
+            disabled={isLoading}
+            className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white py-2 px-4 rounded-lg font-medium text-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isLoading ? (
+              <>
+                <Sparkles className="w-4 h-4 animate-spin" />
+                Analyzing...
+              </>
+            ) : (
+              <>
+                <Lightbulb className="w-4 h-4" />
+                Get Insights
+              </>
+            )}
+          </motion.button>
+        )}
+      </div>
+
+      {recommendations && (
+        <div className="space-y-6">
+          {/* Current Strengths */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-emerald-50 p-4 rounded-lg space-y-3"
+          >
+            <div className="flex items-center gap-2 text-emerald-700">
+              <CheckCircle2 className="w-5 h-5" />
+              <h3 className="font-medium">Current Strengths</h3>
+            </div>
+            <ul className="space-y-2">
+              {formatRecommendations(recommendations).strengths.map(
+                (strength, index) => (
+                  <li
+                    key={index}
+                    className="flex items-start gap-2 text-sm text-emerald-800"
+                  >
+                    <span className="mt-1">•</span>
+                    {strength}
+                  </li>
+                )
+              )}
+            </ul>
+          </motion.div>
+
+          {/* Areas for Improvement */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="bg-amber-50 p-4 rounded-lg space-y-3"
+          >
+            <div className="flex items-center gap-2 text-amber-700">
+              <AlertTriangle className="w-5 h-5" />
+              <h3 className="font-medium">Areas for Improvement</h3>
+            </div>
+            <ul className="space-y-2">
+              {formatRecommendations(recommendations).improvements.map(
+                (improvement, index) => (
+                  <li
+                    key={index}
+                    className="flex items-start gap-2 text-sm text-amber-800"
+                  >
+                    <span className="mt-1">•</span>
+                    {improvement}
+                  </li>
+                )
+              )}
+            </ul>
+          </motion.div>
+
+          {/* Actionable Recommendations */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="bg-blue-50 p-4 rounded-lg space-y-3"
+          >
+            <div className="flex items-center gap-2 text-blue-700">
+              <Target className="w-5 h-5" />
+              <h3 className="font-medium">Action Items</h3>
+            </div>
+            <ul className="space-y-2">
+              {formatRecommendations(recommendations).recommendations.map(
+                (recommendation, index) => (
+                  <li
+                    key={index}
+                    className="flex items-start gap-2 text-sm text-blue-800"
+                  >
+                    <ArrowUpRight className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                    {recommendation}
+                  </li>
+                )
+              )}
+            </ul>
+          </motion.div>
+
+          {/* Potential Impact */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="bg-purple-50 p-4 rounded-lg space-y-3"
+          >
+            <div className="flex items-center gap-2 text-purple-700">
+              <TrendingUp className="w-5 h-5" />
+              <h3 className="font-medium">Potential Impact</h3>
+            </div>
+            <ul className="space-y-2">
+              {formatRecommendations(recommendations).impacts.map(
+                (impact, index) => (
+                  <li
+                    key={index}
+                    className="flex items-start gap-2 text-sm text-purple-800"
+                  >
+                    <Zap className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                    {impact}
+                  </li>
+                )
+              )}
+            </ul>
+          </motion.div>
+        </div>
+      )}
+    </motion.div>
+  );
 
   return (
     <motion.div
@@ -920,7 +1171,76 @@ function SideBar({
             </div>
           </div>
         </motion.div>
+
+        {recommendationsSection}
       </motion.div>
     </motion.div>
   );
 }
+
+// Update the addSolarProjectMarkers function to use the correct fields
+const addSolarProjectMarkers = async (
+  map: mapboxgl.Map,
+  setSelectedProject: (project: Project) => void
+) => {
+  // Combine all solar projects and limit to 5000
+  const allSolarProjects = (solarPart4 as SolarProject[]).slice(0, 100);
+
+  // Use a geocoding service to get coordinates for each project
+  for (const project of allSolarProjects) {
+    if (project.city && project.state) {
+      try {
+        const response = await fetch(
+          `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
+            `${project.city}, ${project.state}`
+          )}.json?access_token=${mapboxgl.accessToken}`
+        );
+        const data = await response.json();
+
+        if (data.features && data.features[0]) {
+          const [lng, lat] = data.features[0].center;
+
+          const markerConfig = getMarkerConfig(project);
+
+          const marker = new FontawesomeMarker({
+            icon: markerConfig.icon,
+            iconColor: markerConfig.iconColor,
+            color: markerConfig.color,
+          })
+            .setLngLat([lng, lat])
+            .addTo(map);
+
+          marker.getElement().style.cursor = "pointer";
+          marker.getElement().addEventListener("click", () => {
+            setSelectedProject({
+              project_name: `Solar Installation - ${project.city}`,
+              project_status:
+                project.projectStatus === "Complete"
+                  ? "Operational"
+                  : "Under Development",
+              renewable_technology: "Solar",
+              project_cost: project.projectCost,
+              new_renewable_capacity_mw: project.totalPvModuleQuantity * 0.0004, // Rough estimate based on typical 400W panels
+              county_province: project.county,
+              state_province: project.state,
+              developer_name:
+                project.contractor || project.primaryPvModuleManufacturer,
+              year_of_commercial_operation: project.dateCompleted
+                ? new Date(project.dateCompleted).getFullYear().toString()
+                : undefined,
+              // Add utility information
+              counterparty: project.electricUtility,
+              // Add program information
+              project_type: project.programType,
+              // Add installation details
+              bid_capacity_mw: project.totalPvModuleQuantity * 0.0004,
+              bid_quantity_mwh: project.totalPvModuleQuantity * 0.0004 * 1460, // Rough estimate: capacity * 4 hours * 365 days
+            } as Project);
+          });
+        }
+      } catch (error) {
+        console.error("Error geocoding solar project:", error);
+      }
+    }
+  }
+};

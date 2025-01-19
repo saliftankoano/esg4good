@@ -26,7 +26,7 @@ export default function Home() {
       // Transform the data into GeoJSON format
       const geojsonData: GeoJSON.FeatureCollection = {
         type: "FeatureCollection",
-        features: powerOutages
+        features: (powerOutages as PowerOutage[])
           .filter((outage: PowerOutage) => outage.Latitude && outage.Longitude)
           .map((outage: PowerOutage) => ({
             type: "Feature",
