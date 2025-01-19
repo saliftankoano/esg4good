@@ -13,9 +13,13 @@ import {
   Shield,
   Sparkles,
   Sun,
+  Leaf,
+  Home,
+  Zap,
+  CircleDot,
 } from 'lucide-react';
 
-export default function Home() {
+export default function HomePage() {
   return (
     <div className='min-h-screen bg-white'>
       {/* Hero Section */}
@@ -113,6 +117,9 @@ export default function Home() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
                 className='flex flex-col items-center justify-center rounded-xl border border-gray-100 bg-white/90 p-6 text-center shadow-xl shadow-gray-200/50 backdrop-blur-lg transition-all duration-300 hover:border-green-200 lg:p-8'>
+                <div className={`mb-4 rounded-full ${stat.iconBg} p-3`}>
+                  <stat.icon className={`h-6 w-6 ${stat.iconColor}`} />
+                </div>
                 <div className='mb-1 bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-3xl font-bold text-transparent lg:mb-2 lg:text-4xl'>
                   {stat.value}
                 </div>
@@ -236,17 +243,29 @@ const stats = [
   {
     value: '1,000+',
     label: 'Active Projects',
+    icon: CircleDot,
+    iconColor: 'text-blue-600',
+    iconBg: 'bg-blue-100',
   },
   {
     value: '7.5 GW',
     label: 'Clean Energy',
+    icon: Zap,
+    iconColor: 'text-yellow-600',
+    iconBg: 'bg-yellow-100',
   },
   {
     value: '3M+',
     label: 'Homes Powered',
+    icon: Home,
+    iconColor: 'text-green-600',
+    iconBg: 'bg-green-100',
   },
   {
     value: '40%',
     label: 'CO₂ Reduction',
+    icon: Leaf,
+    iconColor: 'text-emerald-600',
+    iconBg: 'bg-emerald-100',
   },
 ];
