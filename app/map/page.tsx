@@ -24,7 +24,7 @@ import FontawesomeMarker from 'mapbox-gl-fontawesome-markers';
 import { getProjectRecommendations } from '@/app/actions/groq';
 import evStations from '@/datasets/NYC_EV_Fleet_Station_Network_20250119.json';
 import powerOutages from '@/datasets/power_outage_complaints_20250118.json';
-import largeScaleRenewablePowerProjects from '@/datasets/updated_dataset_with_scores.json';
+import largeScaleRenewablePowerProjects from '@/datasets/updated_dataset_with_scores2.json';
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!;
 
@@ -791,7 +791,7 @@ function SideBar({
           alt={project.projectName}
           className='h-full w-full object-cover'
           fill
-          sizes="(max-width: 400px) 100vw"
+          sizes='(max-width: 400px) 100vw'
           priority
         />
         <motion.button
@@ -1257,12 +1257,16 @@ function getProjectImage(project: Project) {
   if (tech.includes('wind')) {
     return '/images/wind.jpg';
   }
-  if(tech.includes('biogas')) {
+  if (tech.includes('biogas')) {
     return '/images/gas.jpg';
   }
-  if (tech.includes('ev') || tech.includes('charger') || tech.includes('fuel cell')) {
+  if (
+    tech.includes('ev') ||
+    tech.includes('charger') ||
+    tech.includes('fuel cell')
+  ) {
     return '/images/ev.avif';
   }
-  
+
   return 'https://placehold.co/600x400';
 }
