@@ -22,9 +22,9 @@ import {
 import FontawesomeMarker from 'mapbox-gl-fontawesome-markers';
 
 import { getProjectRecommendations } from '@/app/actions/groq';
-import largeScaleRenewablePowerProjects from '@/datasets/Large-scale_Renewable_Projects_Reported_by_NYSERDA__Beginning_2004_20250118.json';
 import evStations from '@/datasets/NYC_EV_Fleet_Station_Network_20250119.json';
 import powerOutages from '@/datasets/power_outage_complaints_20250118.json';
+import largeScaleRenewablePowerProjects from '@/datasets/updated_dataset_with_scores.json';
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!;
 
@@ -67,6 +67,10 @@ export interface Project {
   p50GenerationCalculatedByNyserdaMwhYr?: number;
   transmissionCapacityHvdc?: number;
   georeference?: string;
+  householdIncome: number;
+  socialScore: number;
+  environmentalScore: number;
+  projectScore: number;
 }
 
 export interface PowerOutage {
@@ -850,8 +854,13 @@ function SideBar({
               </p>
             </div>
             <div className='flex items-center gap-2 rounded-lg bg-white px-4 py-2 shadow-sm'>
-              <span className={`text-3xl font-bold ${getScoreColor(85)}`}>
-                85
+              <span
+                className={`text-3xl font-bold ${getScoreColor(
+                  (project.environmentalScore + project.socialScore) / 2
+                )}`}>
+                {Math.round(
+                  (project.environmentalScore + project.socialScore) / 2
+                )}
               </span>
               <div className='flex flex-col text-xs leading-tight text-gray-500'>
                 <span>OVERALL</span>
@@ -870,14 +879,14 @@ function SideBar({
                     Environmental
                   </span>
                   <span className='text-sm font-semibold text-yellow-600'>
-                    92
+                    {Math.round(project.environmentalScore)}
                   </span>
                 </div>
               </div>
               <div className='h-2 overflow-hidden rounded-full bg-gray-200'>
                 <motion.div
                   initial={{ width: 0 }}
-                  animate={{ width: '92%' }}
+                  animate={{ width: `${project.environmentalScore}%` }}
                   transition={{ duration: 1, delay: 0.7 }}
                   className='h-full rounded-full bg-yellow-500'
                 />
@@ -903,14 +912,17 @@ function SideBar({
                     Social
                   </span>
                   <span className='text-sm font-semibold text-purple-600'>
-                    78
+                    {Math.round(project.socialScore)}
                   </span>
                 </div>
               </div>
               <div className='h-2 overflow-hidden rounded-full bg-gray-200'>
-                <div
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${project.socialScore}%` }}
+                  transition={{ duration: 1, delay: 0.8 }}
                   className='h-full rounded-full bg-purple-500'
-                  style={{ width: '78%' }}></div>
+                />
               </div>
               <div className='flex gap-3 pl-7 text-xs text-gray-500'>
                 <div className='flex items-center gap-1'>
@@ -919,7 +931,10 @@ function SideBar({
                 </div>
                 <div className='flex items-center gap-1'>
                   <i className='fas fa-check text-purple-500'></i>
-                  <span>Job Creation</span>
+                  <span>
+                    Household Income: $
+                    {Math.round(project.householdIncome).toLocaleString()}
+                  </span>
                 </div>
               </div>
             </div>
@@ -1210,7 +1225,7 @@ const addEVStationMarkers = (
       const element = marker.getElement();
       element.style.cursor = 'pointer';
       element.style.display = 'none'; // Hide markers initially
-      
+
       // Add click event
       element.addEventListener('click', () => {
         setSelectedProject({
