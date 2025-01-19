@@ -282,7 +282,7 @@ export default function Home() {
   const [selectedProject, setSelectedProject] = useState<Project | undefined>(
     undefined
   );
-  const [showHeatmap, setShowHeatmap] = useState(true);
+  const [showHeatmap, setShowHeatmap] = useState(false);
   const [selectedYear, setSelectedYear] = useState<string>("all");
   const [availableYears] = useState<string[]>(() =>
     getUniqueYears(powerOutages as PowerOutage[])
