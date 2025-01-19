@@ -483,6 +483,11 @@ function SideBar({
   const [recommendations, setRecommendations] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
 
+  // Add this useEffect to reset recommendations when project changes
+  useEffect(() => {
+    setRecommendations("");
+  }, [project.project_name]); // Use project.project_name as dependency to detect project changes
+
   const handleGetRecommendations = async () => {
     setIsLoading(true);
     try {
