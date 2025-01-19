@@ -179,14 +179,14 @@ export default function Home() {
   const [showHeatmap, setShowHeatmap] = useState(true);
   const [selectedYear, setSelectedYear] = useState<string>("all");
   const [availableYears] = useState<string[]>(() =>
-    getUniqueYears(powerOutages)
+    getUniqueYears(powerOutages as PowerOutage[])
   );
 
   const getPowerOutageData = async (year: string) => {
     // Transform the data into GeoJSON format
     const geojsonData: GeoJSON.FeatureCollection = {
       type: "FeatureCollection",
-      features: powerOutages
+      features: (powerOutages as PowerOutage[])
         .filter((outage: PowerOutage) => {
           if (!outage.Latitude || !outage.Longitude) return false;
           if (year === "all") return true;
