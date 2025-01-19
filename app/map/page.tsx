@@ -1257,6 +1257,9 @@ function getProjectImage(project: Project) {
   if (tech.includes('wind')) {
     return '/images/wind.jpg';
   }
+  if(tech.includes('biogas')) {
+    return '/images/gas.jpg';
+  }
   if (tech.includes('ev') || tech.includes('charger') || tech.includes('fuel cell')) {
     return '/images/ev.avif';
   }
