@@ -353,6 +353,7 @@ export default function Home() {
     return () => {
       mapRef.current?.remove();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Add layer toggle controls
