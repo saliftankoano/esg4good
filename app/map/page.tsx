@@ -22,74 +22,51 @@ import {
 import FontawesomeMarker from 'mapbox-gl-fontawesome-markers';
 
 import { getProjectRecommendations } from '@/app/actions/groq';
-import { getProjects } from '@/app/actions/projects';
+import largeScaleRenewablePowerProjects from '@/datasets/Large-scale_Renewable_Projects_Reported_by_NYSERDA__Beginning_2004_20250118.json';
 import evStations from '@/datasets/NYC_EV_Fleet_Station_Network_20250119.json';
 import powerOutages from '@/datasets/power_outage_complaints_20250118.json';
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!;
 
 export interface Project {
-  georeference?: {
-    type: string;
-    coordinates: [number, number];
-  };
-  project_name: string;
-  project_status:
-    | 'Operational'
-    | 'Under Development'
-    | 'Cancelled'
-    | 'Completed';
-  project_type: string;
-  redc?: string;
-  zip_code?: string;
-  energy_storage_energy_capacity_mwh?: number;
-  energy_storage_power_capacity_mwac?: number;
-  developer_name?: string;
-  renewable_technology:
-    | 'Solar'
-    | 'Land Based Wind'
-    | 'Land-based Wind'
-    | 'Offshore Wind'
-    | 'Hydroelectric'
-    | 'Biomass'
-    | 'Biogas - LFG'
-    | 'Biogas - ADG'
-    | 'Fuel Cell'
-    | 'Wind/Solar'
-    | 'Maintenance Hydroelectric'
-    | 'Maintenance Biomass'
-    | 'Existing'
-    | 'New'
-    | 'Return to Service'
-    | 'Upgrade';
-  project_met_economic_benefits_threshold?: 'Yes' | 'No';
-  incremental_economic_benefits_claimed?: 'Yes' | 'No';
+  dataThroughDate: string;
+  eligibility: string;
+  projectName: string;
+  solicitationName?: number;
+  inflationAdjustment?: string;
+  fixedRecPrice?: number;
+  indexORecStrikePrice?: number;
+  incrementalEconomicBenefitsClaimed?: string;
+  projectMetEconomicBenefitsThreshold?: string;
+  renewableTechnology: string;
+  generationType?: string;
+  typeOfExisting?: string;
   counterparty?: string;
-  fixed_rec_price?: number;
-  nyiso_zone?: string;
-  county_province?: string;
-  state_province?: string;
-  year_of_commercial_operation?: string;
-  year_of_delivery_start_date?: string;
-  contract_duration?: string;
-  new_renewable_capacity_mw?: number;
-  bid_capacity_mw?: number;
-  bid_quantity_mwh?: number;
-  max_annual_contract_quantity?: number;
-  permit_process?: string;
-  regulatory_permitting?: string;
-  eligibility?: string;
-  solicitation_name?: string;
-  inflation_adjustment?: string;
-  index_orec_strike_price?: number;
-  generation_type?: string;
-  type_of_existing?: string;
+  developerName?: string;
+  energyStoragePowerCapacityMwac?: number;
+  energyStorageEnergyCapacityMwh?: number;
+  nyisoZone?: string;
   ptid?: string;
-  interconnection_queue_number?: string;
-  article_vii?: string;
-  p10_annual_orec_exceedance?: number;
-  p50_generation_calculated_by_nyserda?: number;
-  transmission_capacity_hvdc?: number;
+  interconnectionQueueNumber?: number;
+  permitProcess?: string;
+  regulatoryPermitting?: string;
+  articleVii?: string;
+  zipCode?: number;
+  countyProvince?: string;
+  stateProvince?: string;
+  redc?: string;
+  projectStatus: string;
+  yearOfCommercialOperation?: number;
+  yearOfDeliveryStartDate?: number;
+  contractDuration?: number;
+  newRenewableCapacityMw?: number;
+  bidCapacityMw?: number;
+  bidQuantityMwh?: number;
+  maxAnnualContractQuantityMwh?: number;
+  p10AnnualOrecExceedance?: number;
+  p50GenerationCalculatedByNyserdaMwhYr?: number;
+  transmissionCapacityHvdc?: number;
+  georeference?: string;
 }
 
 export interface PowerOutage {
@@ -106,14 +83,14 @@ export interface PowerOutage {
   streetName: string;
   crossStreet1: string;
   crossStreet2: string;
-  intersectionStreet1: string | null;
-  intersectionStreet2: string | null;
+  intersectionStreet1?: string;
+  intersectionStreet2?: string;
   addressType: string;
   city: string;
-  landmark: string | null;
+  landmark?: string;
   facilityType: string;
   status: string;
-  dueDate: string | null;
+  dueDate?: string;
   resolutionActionUpdatedDate: string;
   communityBoard: string;
   borough: string;
@@ -121,15 +98,15 @@ export interface PowerOutage {
   yCoordinateStatePlane: number;
   parkFacilityName: string;
   parkBorough: string;
-  vehicleType: string | null;
-  taxiCompanyBorough: string | null;
-  taxiPickUpLocation: string | null;
-  bridgeHighwayName: string | null;
-  bridgeHighwayDirection: string | null;
-  roadRamp: string | null;
-  bridgeHighwaySegment: string | null;
+  vehicleType?: string;
+  taxiCompanyBorough?: string;
+  taxiPickUpLocation?: string;
+  bridgeHighwayName?: string;
+  bridgeHighwayDirection?: string;
+  roadRamp?: string;
+  bridgeHighwaySegment?: string;
   latitude: number;
-  longitude: string;
+  longitude: number;
   location: string;
 }
 
@@ -144,8 +121,14 @@ interface EVStation {
   borough: string;
   latitude: number;
   longitude: number;
-  publicCharger: boolean | null;
-  feeForCityDrivers: boolean | null;
+  publicCharger?: boolean;
+  feeForCityDrivers?: boolean;
+  communityDistrict: number;
+  councilDistrict: number;
+  censusTract2020: number;
+  bin: number;
+  bbl: number;
+  neighborhoodTabulationAreaNta2020: string;
 }
 
 type MarkerConfig = {
@@ -156,11 +139,12 @@ type MarkerConfig = {
 
 type StatusColors = '#22c55e' | '#3b82f6' | '#ef4444' | '#6b7280' | '#f59e0b';
 
-const statusColors: Record<Project['project_status'], StatusColors> = {
+const statusColors: Record<string, StatusColors> = {
   Operational: '#22c55e',
   'Under Development': '#3b82f6',
   Cancelled: '#ef4444',
   Completed: '#22c55e',
+  // Add any other statuses that appear in the data
 };
 
 function getMarkerConfig(project: Project | EVStation): MarkerConfig {
@@ -179,15 +163,15 @@ function getMarkerConfig(project: Project | EVStation): MarkerConfig {
     };
   }
 
-  if (!project.renewable_technology) {
+  if (!project.renewableTechnology) {
     return defaultConfig;
   }
 
   const color =
-    statusColors[project.project_status as keyof typeof statusColors] ||
+    statusColors[project.projectStatus as keyof typeof statusColors] ||
     '#6b7280';
 
-  const tech = project.renewable_technology.toLowerCase();
+  const tech = project.renewableTechnology.toLowerCase();
 
   if (tech.includes('solar')) {
     return {
@@ -276,10 +260,7 @@ export default function Home() {
           type: 'Feature',
           geometry: {
             type: 'Point',
-            coordinates: [
-              parseFloat(outage.longitude),
-              outage.latitude.toString(),
-            ],
+            coordinates: [outage.longitude, outage.latitude],
           },
           properties: {
             incidents: 1,
@@ -394,13 +375,19 @@ export default function Home() {
             },
           });
 
-          // Add renewable projects markers
-          const projects = await getProjects();
-          projects
-            .filter((project: Project) => project.state_province === 'NY')
-            .forEach((project: Project) => {
-              if (project.georeference?.coordinates) {
-                const [lng, lat] = project.georeference.coordinates;
+          // Replace getProjects() with direct JSON usage
+          const projects = largeScaleRenewablePowerProjects as Project[];
+
+          // Add markers for each project
+          projects.forEach((project) => {
+            if (project.georeference) {
+              // Extract coordinates from georeference string
+              const coordMatch = project.georeference.match(
+                /POINT \(([-\d.]+) ([-\d.]+)\)/
+              );
+              if (coordMatch) {
+                const [, longitude, latitude] = coordMatch;
+
                 const markerConfig = getMarkerConfig(project);
 
                 const marker = new FontawesomeMarker({
@@ -408,7 +395,7 @@ export default function Home() {
                   iconColor: markerConfig.iconColor,
                   color: markerConfig.color,
                 })
-                  .setLngLat([lng, lat])
+                  .setLngLat([parseFloat(longitude), parseFloat(latitude)])
                   .addTo(mapRef.current!);
 
                 marker.getElement().style.cursor = 'pointer';
@@ -416,23 +403,26 @@ export default function Home() {
                   setSelectedProject(project);
                 });
               }
-            });
+            }
+          });
 
           // Add EV station markers
           await addEVStationMarkers(mapRef.current!, setSelectedProject);
         } catch (error) {
-          console.error('Error loading map data:', error);
+          console.error('Error initializing map:', error);
         }
       });
     };
 
-    initializeMap();
+    if (mapContainerRef.current) {
+      initializeMap();
+    }
 
     return () => {
       mapRef.current?.remove();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [selectedYear]);
 
   // Add layer toggle controls
   // const [showHeatmap, setShowHeatmap] = useState(true);
@@ -538,7 +528,7 @@ function SideBar({
   // Add this useEffect to reset recommendations when project changes
   useEffect(() => {
     setRecommendations('');
-  }, [project.project_name]); // Use project.project_name as dependency to detect project changes
+  }, [project.projectName]); // Use project.projectName as dependency to detect project changes
 
   const handleGetRecommendations = async () => {
     setIsLoading(true);
@@ -786,7 +776,7 @@ function SideBar({
         animate={{ scaleY: 1 }}
         transition={{ delay: 0.2 }}
         className={`absolute left-0 top-0 h-full w-2 ${getStatusColor(
-          project.project_status
+          project.projectStatus
         )}`}
       />
 
@@ -794,7 +784,7 @@ function SideBar({
       <div className='relative h-48 w-full'>
         <Image
           src='https://placehold.co/600x400'
-          alt={project.project_name}
+          alt={project.projectName}
           className='h-full w-full object-cover'
           width={600}
           height={400}
@@ -811,7 +801,7 @@ function SideBar({
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
           className='absolute bottom-4 left-4 rounded bg-black bg-opacity-50 px-3 py-1 text-white'>
-          {project.project_status}
+          {project.projectStatus}
         </motion.div>
       </div>
 
@@ -827,18 +817,18 @@ function SideBar({
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}>
           <h1 className='mb-1 text-2xl font-semibold text-gray-900'>
-            {displayValue(project.project_name)}
+            {displayValue(project.projectName)}
           </h1>
           <div className='flex gap-2 text-sm text-gray-600'>
             <motion.span
               whileHover={{ scale: 1.05 }}
               className='rounded bg-gray-100 px-2 py-1'>
-              {displayValue(project.renewable_technology)}
+              {displayValue(project.renewableTechnology)}
             </motion.span>
             <motion.span
               whileHover={{ scale: 1.05 }}
               className='rounded bg-gray-100 px-2 py-1'>
-              NYISO: {displayValue(project.nyiso_zone)}
+              NYISO: {displayValue(project.nyisoZone)}
             </motion.span>
           </div>
         </motion.div>
@@ -952,8 +942,8 @@ function SideBar({
                 CO₂ Reduction
               </div>
               <div className='text-lg font-semibold text-gray-900'>
-                {project.bid_quantity_mwh
-                  ? `${Math.round(project.bid_quantity_mwh * 0.19)} metric tons`
+                {project.bidQuantityMwh
+                  ? `${Math.round(project.bidQuantityMwh * 0.19)} metric tons`
                   : 'N/A'}
               </div>
             </motion.div>
@@ -968,8 +958,8 @@ function SideBar({
                 Jobs Created
               </div>
               <div className='text-lg font-semibold text-gray-900'>
-                {project.new_renewable_capacity_mw
-                  ? `${Math.round(project.new_renewable_capacity_mw * 2.5)}`
+                {project.newRenewableCapacityMw
+                  ? `${Math.round(project.newRenewableCapacityMw * 2.5)}`
                   : 'N/A'}
               </div>
             </motion.div>
@@ -984,9 +974,9 @@ function SideBar({
                 Homes Powered
               </div>
               <div className='text-lg font-semibold text-gray-900'>
-                {project.bid_quantity_mwh
+                {project.bidQuantityMwh
                   ? `${Math.round(
-                      project.bid_quantity_mwh * 0.12
+                      project.bidQuantityMwh * 0.12
                     ).toLocaleString()}`
                   : 'N/A'}
               </div>
@@ -1001,14 +991,14 @@ function SideBar({
           <div>
             <p className='text-sm text-gray-600'>Capacity</p>
             <p className='text-xl font-bold text-gray-900'>
-              {formatMW(project.new_renewable_capacity_mw)}
+              {formatMW(project.newRenewableCapacityMw)}
             </p>
           </div>
           <div>
             <p className='text-sm text-gray-600'>Annual Output</p>
             <p className='text-xl font-bold text-gray-900'>
-              {project.bid_quantity_mwh
-                ? `${project.bid_quantity_mwh.toLocaleString()} MWh`
+              {project.bidQuantityMwh
+                ? `${project.bidQuantityMwh.toLocaleString()} MWh`
                 : 'N/A'}
             </p>
           </div>
@@ -1029,11 +1019,11 @@ function SideBar({
               className='rounded-lg bg-gray-50 p-4'>
               <p className='text-sm text-gray-600'>Location</p>
               <p className='font-medium text-gray-900'>
-                {displayValue(project.county_province)},{' '}
-                {displayValue(project.state_province)}
+                {displayValue(project.countyProvince)},{' '}
+                {displayValue(project.stateProvince)}
               </p>
               <p className='mt-1 text-sm text-gray-600'>
-                ZIP: {displayValue(project.zip_code)}
+                ZIP: {displayValue(project.zipCode)}
               </p>
               <p className='mt-1 text-sm text-gray-600'>
                 REDC: {displayValue(project.redc)}
@@ -1044,13 +1034,13 @@ function SideBar({
               className='rounded-lg bg-gray-50 p-4'>
               <p className='text-sm text-gray-600'>Timeline</p>
               <p className='font-medium text-gray-900'>
-                Operation: {displayValue(project.year_of_commercial_operation)}
+                Operation: {displayValue(project.yearOfCommercialOperation)}
               </p>
               <p className='mt-1 text-sm text-gray-600'>
-                Start: {displayValue(project.year_of_delivery_start_date)}
+                Start: {displayValue(project.yearOfDeliveryStartDate)}
               </p>
               <p className='mt-1 text-sm text-gray-600'>
-                Duration: {displayValue(project.contract_duration)} years
+                Duration: {displayValue(project.contractDuration)} years
               </p>
             </motion.div>
           </div>
@@ -1069,7 +1059,7 @@ function SideBar({
             <div>
               <p className='text-sm text-gray-600'>Developer</p>
               <p className='font-medium text-gray-900'>
-                {displayValue(project.developer_name)}
+                {displayValue(project.developerName)}
               </p>
             </div>
             <div>
@@ -1081,7 +1071,7 @@ function SideBar({
             <div>
               <p className='text-sm text-gray-600'>Project Type</p>
               <p className='font-medium text-gray-900'>
-                {displayValue(project.project_type)}
+                {displayValue(project.renewableTechnology)}
               </p>
             </div>
           </div>
@@ -1102,11 +1092,11 @@ function SideBar({
               className='rounded-lg bg-gray-50 p-4'>
               <p className='text-sm text-gray-600'>Renewable Capacity</p>
               <p className='font-medium text-gray-900'>
-                {formatMW(project.new_renewable_capacity_mw)}
+                {formatMW(project.newRenewableCapacityMw)}
               </p>
               <p className='mt-2 text-sm text-gray-600'>Bid Capacity</p>
               <p className='font-medium text-gray-900'>
-                {formatMW(project.bid_capacity_mw)}
+                {formatMW(project.bidCapacityMw)}
               </p>
             </motion.div>
             <motion.div
@@ -1114,14 +1104,14 @@ function SideBar({
               className='rounded-lg bg-gray-50 p-4'>
               <p className='text-sm text-gray-600'>Storage Energy</p>
               <p className='font-medium text-gray-900'>
-                {project.energy_storage_energy_capacity_mwh
-                  ? `${project.energy_storage_energy_capacity_mwh} MWh`
+                {project.energyStorageEnergyCapacityMwh
+                  ? `${project.energyStorageEnergyCapacityMwh} MWh`
                   : 'N/A'}
               </p>
               <p className='mt-2 text-sm text-gray-600'>Storage Power</p>
               <p className='font-medium text-gray-900'>
-                {project.energy_storage_power_capacity_mwac
-                  ? `${project.energy_storage_power_capacity_mwac} MWac`
+                {project.energyStoragePowerCapacityMwac
+                  ? `${project.energyStoragePowerCapacityMwac} MWac`
                   : 'N/A'}
               </p>
             </motion.div>
@@ -1141,21 +1131,19 @@ function SideBar({
             <div>
               <p className='text-sm text-gray-600'>Benefits Threshold Met</p>
               <p className='font-medium text-gray-900'>
-                {displayValue(project.project_met_economic_benefits_threshold)}
+                {displayValue(project.projectMetEconomicBenefitsThreshold)}
               </p>
             </div>
             <div>
               <p className='text-sm text-gray-600'>Incremental Benefits</p>
               <p className='font-medium text-gray-900'>
-                {displayValue(project.incremental_economic_benefits_claimed)}
+                {displayValue(project.incrementalEconomicBenefitsClaimed)}
               </p>
             </div>
             <div>
               <p className='text-sm text-gray-600'>Fixed REC Price</p>
               <p className='font-medium text-gray-900'>
-                {project.fixed_rec_price
-                  ? `$${project.fixed_rec_price}`
-                  : 'N/A'}
+                {project.fixedRecPrice ? `$${project.fixedRecPrice}` : 'N/A'}
               </p>
             </div>
             <div>
@@ -1163,8 +1151,8 @@ function SideBar({
                 Max Annual Contract Quantity
               </p>
               <p className='font-medium text-gray-900'>
-                {project.max_annual_contract_quantity
-                  ? `${project.max_annual_contract_quantity.toLocaleString()} MWh`
+                {project.maxAnnualContractQuantityMwh
+                  ? `${project.maxAnnualContractQuantityMwh.toLocaleString()} MWh`
                   : 'N/A'}
               </p>
             </div>
@@ -1184,13 +1172,13 @@ function SideBar({
             <div>
               <p className='text-sm text-gray-600'>Process Status</p>
               <p className='font-medium text-gray-900'>
-                {displayValue(project.permit_process)}
+                {displayValue(project.permitProcess)}
               </p>
             </div>
             <div>
               <p className='text-sm text-gray-600'>Regulatory Status</p>
               <p className='font-medium text-gray-900'>
-                {displayValue(project.regulatory_permitting)}
+                {displayValue(project.regulatoryPermitting)}
               </p>
             </div>
           </div>
@@ -1226,19 +1214,15 @@ const addEVStationMarkers = (
       // Add click event
       element.addEventListener('click', () => {
         setSelectedProject({
-          project_name: station.stationName,
-          project_status: 'Operational',
-          project_type: 'EV Charging Station',
-          renewable_technology: station.typeOfCharger,
-          address: station.address,
-          city: station.city,
-          borough: station.borough,
-          developer_name: station.agency,
-          additional_info: {
-            numberOfPlugs: station.noOfPlugs,
-            publicCharger: station.publicCharger,
-            feeForCityDrivers: station.feeForCityDrivers,
-          },
+          dataThroughDate: new Date().toISOString(),
+          eligibility: 'EV',
+          projectName: station.stationName,
+          projectStatus: 'Operational',
+          renewableTechnology: station.typeOfCharger,
+          developerName: station.agency,
+          countyProvince: station.borough,
+          stateProvince: 'NY',
+          // Add any other required fields from the Project interface
         });
       });
     }
