@@ -1260,6 +1260,9 @@ function getProjectImage(project: Project) {
   if (tech.includes('biogas')) {
     return '/images/gas.jpg';
   }
+  if(tech.includes('biomass')) {
+    return '/images/biomass.jpg';
+  }
   if (
     tech.includes('ev') ||
     tech.includes('charger') ||
