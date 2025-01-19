@@ -150,7 +150,6 @@ type MarkerConfig = {
 };
 
 type StatusColors = "#22c55e" | "#3b82f6" | "#ef4444" | "#6b7280" | "#f59e0b";
-type StatusColors = "#22c55e" | "#3b82f6" | "#ef4444" | "#6b7280";
 
 const statusColors: Record<Project["project_status"], StatusColors> = {
   Operational: "#22c55e",
@@ -199,6 +198,15 @@ function getMarkerConfig(
     return {
       icon: "fa-solid fa-solar-panel",
       color: project.projectStatus === "Complete" ? "#22c55e" : "#3b82f6",
+      iconColor: "white",
+    };
+  }
+
+  // Special case for EVStation type
+  if ("typeOfCharger" in project) {
+    return {
+      icon: "fa-solid fa-charging-station",
+      color: "#22c55e", // Green for Level 3, Blue for Level 2
       iconColor: "white",
     };
   }
