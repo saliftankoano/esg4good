@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
-const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
+const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
 export async function POST(request: Request) {
   try {
@@ -9,7 +9,7 @@ export async function POST(request: Request) {
     const { project } = body;
 
     if (!GROQ_API_KEY) {
-      throw new Error("GROQ_API_KEY is not configured");
+      throw new Error('GROQ_API_KEY is not configured');
     }
 
     const prompt = `As a renewable energy and sustainability expert, analyze the following project and provide a comprehensive evaluation. For each category, provide AT LEAST 3 points.
@@ -47,21 +47,21 @@ Remember:
 - Maintain a professional, constructive tone`;
 
     const response = await fetch(GROQ_API_URL, {
-      method: "POST",
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
         Authorization: `Bearer ${GROQ_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
+        model: 'llama-3.3-70b-versatile',
         messages: [
           {
-            role: "system",
+            role: 'system',
             content:
-              "You are an expert in renewable energy projects and ESG scoring. Always provide comprehensive, structured responses with at least 3 points per category. Be specific and actionable in your recommendations. Focus on quantifiable metrics and practical implementation details.",
+              'You are an expert in renewable energy projects and ESG scoring. Always provide comprehensive, structured responses with at least 3 points per category. Be specific and actionable in your recommendations. Focus on quantifiable metrics and practical implementation details.',
           },
           {
-            role: "user",
+            role: 'user',
             content: prompt,
           },
         ],
@@ -74,7 +74,7 @@ Remember:
       const errorData = await response.json().catch(() => ({}));
       throw new Error(
         `Groq API responded with status ${response.status}: ${
-          errorData.error?.message || "Unknown error"
+          errorData.error?.message || 'Unknown error'
         }`
       );
     }
@@ -82,29 +82,29 @@ Remember:
     const data = await response.json();
 
     if (!data.choices?.[0]?.message?.content) {
-      throw new Error("Unexpected response format from Groq API");
+      throw new Error('Unexpected response format from Groq API');
     }
 
     // Validate that all sections have content
     const content = data.choices[0].message.content;
     const sections = {
-      strengths: content.includes("Current strengths:"),
-      improvements: content.includes("Areas for improvement:"),
-      recommendations: content.includes("Specific actionable recommendations:"),
-      impacts: content.includes("Potential score impact:"),
+      strengths: content.includes('Current strengths:'),
+      improvements: content.includes('Areas for improvement:'),
+      recommendations: content.includes('Specific actionable recommendations:'),
+      impacts: content.includes('Potential score impact:'),
     };
 
     if (!Object.values(sections).every(Boolean)) {
-      throw new Error("Incomplete response: Missing required sections");
+      throw new Error('Incomplete response: Missing required sections');
     }
 
     return NextResponse.json({ content: data.choices[0].message.content });
   } catch (error) {
-    console.error("Error in Groq API route:", error);
+    console.error('Error in Groq API route:', error);
     return NextResponse.json(
       {
         error:
-          error instanceof Error ? error.message : "Failed to process request",
+          error instanceof Error ? error.message : 'Failed to process request',
       },
       { status: 500 }
     );

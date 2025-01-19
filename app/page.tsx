@@ -1,16 +1,18 @@
 'use client';
+
 import Link from 'next/link';
+
 import { motion } from 'framer-motion';
 import {
-  Map,
-  Sun,
-  Battery,
   ArrowRight,
-  LineChart,
-  Shield,
-  Globe,
+  Battery,
   ChevronRight,
+  Globe,
+  LineChart,
+  Map,
+  Shield,
   Sparkles,
+  Sun,
 } from 'lucide-react';
 
 export default function Home() {
@@ -29,46 +31,42 @@ export default function Home() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 1.5 }}
-          className='absolute inset-0'
-        >
-          <div className='absolute top-20 left-10 w-32 h-32 bg-green-400 rounded-full blur-[100px] opacity-20 animate-pulse'></div>
-          <div className='absolute top-40 right-20 w-48 h-48 bg-blue-400 rounded-full blur-[120px] opacity-20 animate-pulse delay-700'></div>
-          <div className='absolute bottom-20 left-1/3 w-40 h-40 bg-yellow-400 rounded-full blur-[90px] opacity-20 animate-pulse delay-1000'></div>
+          className='absolute inset-0'>
+          <div className='absolute left-10 top-20 h-32 w-32 animate-pulse rounded-full bg-green-400 opacity-20 blur-[100px]'></div>
+          <div className='absolute right-20 top-40 h-48 w-48 animate-pulse rounded-full bg-blue-400 opacity-20 blur-[120px] delay-700'></div>
+          <div className='absolute bottom-20 left-1/3 h-40 w-40 animate-pulse rounded-full bg-yellow-400 opacity-20 blur-[90px] delay-1000'></div>
         </motion.div>
 
-        <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-24 relative'>
+        <div className='relative mx-auto max-w-7xl px-4 pb-24 pt-28 sm:px-6 lg:px-8'>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
-            className='text-center'
-          >
+            className='text-center'>
             {/* Enhanced Badge */}
             <motion.div
-              className='flex items-center justify-center mb-8'
+              className='mb-8 flex items-center justify-center'
               initial={{ scale: 0.9 }}
               animate={{ scale: 1 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-              <span className='px-5 py-2.5 rounded-full bg-gradient-to-r from-green-100 to-blue-100 text-gray-800 text-sm font-semibold inline-flex items-center shadow-sm'>
-                <Sparkles className='w-4 h-4 mr-2 text-green-600' />
+              transition={{ duration: 0.5, delay: 0.2 }}>
+              <span className='inline-flex items-center rounded-full bg-gradient-to-r from-green-100 to-blue-100 px-5 py-2.5 text-sm font-semibold text-gray-800 shadow-sm'>
+                <Sparkles className='mr-2 h-4 w-4 text-green-600' />
                 Empowering New York&apos;s Green Future
-                <ChevronRight className='w-4 h-4 ml-1 text-green-600' />
+                <ChevronRight className='ml-1 h-4 w-4 text-green-600' />
               </span>
             </motion.div>
 
             {/* Enhanced Heading */}
-            <h1 className='text-6xl md:text-7xl font-bold text-gray-900 mb-6 tracking-tight leading-tight'>
+            <h1 className='mb-6 text-6xl font-bold leading-tight tracking-tight text-gray-900 md:text-7xl'>
               Visualize New York&apos;s{' '}
               <span className='relative inline-block'>
-                <span className='relative z-10 text-transparent bg-clip-text bg-gradient-to-r from-green-600 via-blue-600 to-green-600 bg-size-200 animate-gradient'>
+                <span className='bg-size-200 relative z-10 animate-gradient bg-gradient-to-r from-green-600 via-blue-600 to-green-600 bg-clip-text text-transparent'>
                   Clean Energy
                 </span>
                 <svg
-                  className='absolute -bottom-2 left-0 w-full h-3 text-green-200 animate-pulse'
+                  className='absolute -bottom-2 left-0 h-3 w-full animate-pulse text-green-200'
                   viewBox='0 0 300 12'
-                  fill='currentColor'
-                >
+                  fill='currentColor'>
                   <path
                     d='M1 5.5Q75 3 150 6.5T300 5.5'
                     stroke='currentColor'
@@ -85,7 +83,7 @@ export default function Home() {
             </h1>
 
             {/* Enhanced Description */}
-            <p className='text-xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed font-light'>
+            <p className='mx-auto mb-12 max-w-3xl text-xl font-light leading-relaxed text-gray-600'>
               Experience an immersive journey through New York&apos;s renewable
               energy landscape. Explore interactive maps, track real-time
               progress, and visualize our path to a sustainable future.
@@ -95,10 +93,9 @@ export default function Home() {
             <div className='flex justify-center'>
               <Link
                 href='/map'
-                className='group inline-flex items-center justify-center px-8 py-4 rounded-xl bg-gradient-to-r from-green-600 to-blue-600 text-white font-semibold hover:shadow-lg hover:shadow-green-500/30 transition-all duration-300 transform hover:-translate-y-0.5'
-              >
+                className='group inline-flex transform items-center justify-center rounded-xl bg-gradient-to-r from-green-600 to-blue-600 px-8 py-4 font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-green-500/30'>
                 Explore Interactive Map
-                <Map className='ml-2 h-5 w-5 group-hover:rotate-12 transition-transform' />
+                <Map className='ml-2 h-5 w-5 transition-transform group-hover:rotate-12' />
               </Link>
             </div>
           </motion.div>
@@ -108,20 +105,18 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className='mt-20 grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6'
-          >
+            className='mt-20 grid grid-cols-2 gap-4 lg:grid-cols-4 lg:gap-6'>
             {stats.map((stat, index) => (
               <motion.div
                 key={stat.label}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
-                className='bg-white/90 backdrop-blur-lg rounded-xl p-6 lg:p-8 shadow-xl shadow-gray-200/50 border border-gray-100 hover:border-green-200 transition-all duration-300 flex flex-col items-center justify-center text-center'
-              >
-                <div className='text-3xl lg:text-4xl font-bold mb-1 lg:mb-2 bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent'>
+                className='flex flex-col items-center justify-center rounded-xl border border-gray-100 bg-white/90 p-6 text-center shadow-xl shadow-gray-200/50 backdrop-blur-lg transition-all duration-300 hover:border-green-200 lg:p-8'>
+                <div className='mb-1 bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-3xl font-bold text-transparent lg:mb-2 lg:text-4xl'>
                   {stat.value}
                 </div>
-                <div className='text-sm lg:text-base text-gray-600 font-medium'>
+                <div className='text-sm font-medium text-gray-600 lg:text-base'>
                   {stat.label}
                 </div>
               </motion.div>
@@ -131,27 +126,25 @@ export default function Home() {
       </div>
 
       {/* Features Grid with enhanced styling */}
-      <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20'>
-        <div className='grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8'>
+      <div className='mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8'>
+        <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:gap-8'>
           {features.map((feature, index) => (
             <motion.div
               key={feature.title}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className='bg-white p-6 lg:p-8 rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100 hover:border-green-200 hover:shadow-green-100/50 transition-all duration-300'
-            >
+              className='rounded-2xl border border-gray-100 bg-white p-6 shadow-xl shadow-gray-200/50 transition-all duration-300 hover:border-green-200 hover:shadow-green-100/50 lg:p-8'>
               <div
-                className={`w-12 h-12 lg:w-14 lg:h-14 rounded-xl flex items-center justify-center mb-4 lg:mb-6 ${feature.iconBg}`}
-              >
+                className={`mb-4 flex h-12 w-12 items-center justify-center rounded-xl lg:mb-6 lg:h-14 lg:w-14 ${feature.iconBg}`}>
                 <feature.icon
                   className={`h-6 w-6 lg:h-7 lg:w-7 ${feature.iconColor}`}
                 />
               </div>
-              <h3 className='text-lg lg:text-xl font-semibold text-gray-900 mb-3 lg:mb-4'>
+              <h3 className='mb-3 text-lg font-semibold text-gray-900 lg:mb-4 lg:text-xl'>
                 {feature.title}
               </h3>
-              <p className='text-sm lg:text-base text-gray-600 leading-relaxed'>
+              <p className='text-sm leading-relaxed text-gray-600 lg:text-base'>
                 {feature.description}
               </p>
             </motion.div>
@@ -162,24 +155,22 @@ export default function Home() {
       {/* Enhanced CTA Section */}
       <div className='relative bg-gradient-to-r from-green-600 to-blue-600 py-20'>
         <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-20"></div>
-        <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative'>
+        <div className='relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8'>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className='text-center'
-          >
-            <h2 className='text-4xl font-bold text-white mb-6'>
+            className='text-center'>
+            <h2 className='mb-6 text-4xl font-bold text-white'>
               Ready to Make an Impact?
             </h2>
-            <p className='text-xl text-green-100 mb-8 max-w-2xl mx-auto'>
+            <p className='mx-auto mb-8 max-w-2xl text-xl text-green-100'>
               Join us in visualizing and tracking New York&apos;s journey
               towards a sustainable energy future.
             </p>
             <Link
               href='/map'
-              className='inline-flex items-center px-8 py-4 rounded-xl bg-white text-gray-900 font-semibold hover:shadow-lg hover:shadow-black/20 transition-all duration-300 transform hover:-translate-y-0.5'
-            >
+              className='inline-flex transform items-center rounded-xl bg-white px-8 py-4 font-semibold text-gray-900 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/20'>
               Get Started Now
               <ArrowRight className='ml-2 h-5 w-5' />
             </Link>

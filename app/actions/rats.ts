@@ -1,5 +1,6 @@
-"use server";
-import { RatSighting } from "@/app/outage/page";
+'use server';
+
+import { RatSighting } from '@/app/outage/page';
 
 export const getRats = async () => {
   const token = process.env.APP_TOKEN;
@@ -8,7 +9,7 @@ export const getRats = async () => {
   let offset = 0;
 
   if (!token) {
-    throw new Error("APP_TOKEN environment variable is not set");
+    throw new Error('APP_TOKEN environment variable is not set');
   }
 
   try {
@@ -17,14 +18,14 @@ export const getRats = async () => {
         `https://data.cityofnewyork.us/resource/3q43-55fe.json?$where=created_date >= '2024-01-01T00:00:00.000'&$limit=${limit}&$offset=${offset}`,
         {
           headers: {
-            "X-App-Token": token,
+            'X-App-Token': token,
           },
         }
       );
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(`API Error: ${errorData.message || "Unknown error"}`);
+        throw new Error(`API Error: ${errorData.message || 'Unknown error'}`);
       }
 
       const data = await response.json();
@@ -36,7 +37,7 @@ export const getRats = async () => {
 
     return allData;
   } catch (error) {
-    console.error("Failed to fetch rat data:", error);
+    console.error('Failed to fetch rat data:', error);
     throw error;
   }
 };
