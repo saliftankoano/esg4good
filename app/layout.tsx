@@ -16,6 +16,16 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: 'ESG For Good',
   description: 'ESG For Good',
+  icons: {
+    icon: [
+      {
+        url: '/images/icon-green.png',
+        href: '/images/icon-green.png',
+      },
+    ],
+    shortcut: '/images/icon-green.png',
+    apple: '/images/icon-green.png',
+  },
 };
 
 export default function RootLayout({
@@ -26,6 +36,8 @@ export default function RootLayout({
   return (
     <html lang='en'>
       <head>
+        <link rel='icon' href='/images/icon-green.png' />
+        <link rel='shortcut icon' href='/images/icon-green.png' />
         <link
           rel='stylesheet'
           href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'
