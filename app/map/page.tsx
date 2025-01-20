@@ -242,6 +242,28 @@ function getUniqueYears(outages: PowerOutage[]): string[] {
   return years.map((year) => year.toString());
 }
 
+const getRatYears = (data: RatSighting[]): string[] => {
+  const years = data
+    .map((sighting) => new Date(sighting.created_date).getFullYear())
+    .filter((year, index, self) => self.indexOf(year) === index)
+    .sort((a, b) => b - a);
+
+  return years.map((year) => year.toString());
+};
+
+// First, update the getActiveYears function to handle the default state
+const getActiveYears = (
+  showHeatmap: boolean,
+  showRatSightings: boolean,
+  availableYears: string[],
+  ratYears: string[]
+) => {
+  if (!showHeatmap && !showRatSightings) return []; // No years when no layer is active
+  if (showHeatmap) return availableYears;
+  if (showRatSightings) return ratYears;
+  return [];
+};
+
 export default function Home() {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
@@ -257,6 +279,7 @@ export default function Home() {
   const [showRatSightings, setShowRatSightings] = useState(false);
   const [ratSightingsData, setRatSightingsData] = useState<RatSighting[]>([]);
   const [isLoadingRats, setIsLoadingRats] = useState(false);
+  const [ratYears, setRatYears] = useState<string[]>([]);
 
   const getPowerOutageData = async (year: string) => {
     // Transform the data into GeoJSON format
@@ -352,7 +375,7 @@ export default function Home() {
         }
       });
 
-      // Wait for map to load before adding markers and layers
+      // Wait for map to load before adding sources and layers
       mapRef.current.on('load', async () => {
         try {
           // Add power outage heatmap layer
@@ -418,46 +441,13 @@ export default function Home() {
             },
           });
 
-          // Replace getProjects() with direct JSON usage
-          // @ts-expect-error - TODO: fix this
-          const projects = largeScaleRenewablePowerProjects as Project[];
-
-          // Add markers for each project
-          projects.forEach((project) => {
-            if (project.georeference) {
-              // Extract coordinates from georeference string
-              const coordMatch = project.georeference.match(
-                /POINT \(([-\d.]+) ([-\d.]+)\)/
-              );
-              if (coordMatch) {
-                const [, longitude, latitude] = coordMatch;
-
-                const markerConfig = getMarkerConfig(project);
-
-                const marker = new FontawesomeMarker({
-                  icon: markerConfig.icon,
-                  iconColor: markerConfig.iconColor,
-                  color: markerConfig.color,
-                })
-                  .setLngLat([parseFloat(longitude), parseFloat(latitude)])
-                  .addTo(mapRef.current!);
-
-                marker.getElement().style.cursor = 'pointer';
-                marker.getElement().addEventListener('click', () => {
-                  setSelectedProject(project);
-                });
-              }
-            }
-          });
-
-          // Add EV station markers
-          await addEVStationMarkers(mapRef.current!, setSelectedProject);
-
-          // Add rat sightings heatmap source and layer
-          const ratData = await getRatSightingsData(selectedYear);
+          // Add rat sightings source and layer
           mapRef.current?.addSource('rat-sightings', {
             type: 'geojson',
-            data: ratData,
+            data: {
+              type: 'FeatureCollection',
+              features: [],
+            },
           });
 
           mapRef.current?.addLayer({
@@ -515,6 +505,42 @@ export default function Home() {
               'heatmap-opacity': 0.6,
             },
           });
+
+          // Replace getProjects() with direct JSON usage
+          // @ts-expect-error - TODO: fix this
+          const projects = largeScaleRenewablePowerProjects as Project[];
+
+          // Add markers for each project
+          projects.forEach((project) => {
+            if (project.georeference) {
+              // Extract coordinates from georeference string
+              const coordMatch = project.georeference.match(
+                /POINT \(([-\d.]+) ([-\d.]+)\)/
+              );
+              if (coordMatch) {
+                const [, longitude, latitude] = coordMatch;
+
+                const markerConfig = getMarkerConfig(project);
+
+                const marker = new FontawesomeMarker({
+                  icon: markerConfig.icon,
+                  iconColor: markerConfig.iconColor,
+                  color: markerConfig.color,
+                })
+                  .setLngLat([parseFloat(longitude), parseFloat(latitude)])
+                  .addTo(mapRef.current!);
+
+                marker.getElement().style.cursor = 'pointer';
+                marker.getElement().addEventListener('click', () => {
+                  setSelectedProject(project);
+                });
+              }
+            }
+          });
+
+          // Add EV station markers
+          await addEVStationMarkers(mapRef.current!, setSelectedProject);
+
         } catch (error) {
           console.error('Error initializing map:', error);
         }
@@ -528,8 +554,7 @@ export default function Home() {
     return () => {
       mapRef.current?.remove();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedYear]);
+  }, []);
 
   // Add layer toggle controls
   // const [showHeatmap, setShowHeatmap] = useState(true);
@@ -573,25 +598,16 @@ export default function Home() {
     }
   }, [showRatSightings]);
 
-  // Update the rat sightings data when year changes
-  useEffect(() => {
-    if (mapRef.current?.getSource('rat-sightings')) {
-      getRatSightingsData(selectedYear).then((data) => {
-        (
-          mapRef.current?.getSource('rat-sightings') as mapboxgl.GeoJSONSource
-        )?.setData(data);
-      });
-    }
-  }, [selectedYear]);
-
-  // Add effect to fetch rat data when showing rat sightings
+  // Update the rat data loading effect
   useEffect(() => {
     if (showRatSightings && ratSightingsData.length === 0) {
       setIsLoadingRats(true);
       getRats()
         .then(data => {
           setRatSightingsData(data);
-          // Update the map source if it exists
+          setRatYears(getRatYears(data));
+          
+          // Update the map source with the new data
           if (mapRef.current?.getSource('rat-sightings')) {
             getRatSightingsData(selectedYear, data).then((geoData) => {
               (mapRef.current?.getSource('rat-sightings') as mapboxgl.GeoJSONSource)?.setData(geoData);
@@ -600,74 +616,119 @@ export default function Home() {
         })
         .catch(error => {
           console.error('Error fetching rat data:', error);
-          // You might want to show an error message to the user here
         })
         .finally(() => {
           setIsLoadingRats(false);
         });
     }
-  }, [showRatSightings]);
+  }, [showRatSightings, selectedYear]);
+
+  // Add a separate effect to update sources when year changes
+  useEffect(() => {
+    // Update power outages data
+    if (mapRef.current?.getSource('power-outages')) {
+      getPowerOutageData(selectedYear).then((data) => {
+        (mapRef.current?.getSource('power-outages') as mapboxgl.GeoJSONSource)?.setData(data);
+      });
+    }
+
+    // Update rat sightings data
+    if (mapRef.current?.getSource('rat-sightings') && ratSightingsData.length > 0) {
+      getRatSightingsData(selectedYear, ratSightingsData).then((data) => {
+        (mapRef.current?.getSource('rat-sightings') as mapboxgl.GeoJSONSource)?.setData(data);
+      });
+    }
+  }, [selectedYear, ratSightingsData]);
 
   return (
     <div>
       <div className='absolute right-4 top-4 z-10 space-y-2 rounded-lg bg-white p-2 shadow-md'>
-        <div className='flex items-center justify-between space-x-4'>
-          <label className='flex cursor-pointer items-center space-x-2'>
-            <input
-              type='checkbox'
-              checked={showHeatmap}
-              onChange={(e) => setShowHeatmap(e.target.checked)}
-              className='form-checkbox h-4 w-4 text-blue-600'
-            />
-            <span className='text-sm font-medium text-gray-700'>
-              Show Power Outages
-            </span>
-          </label>
+        <div className='flex flex-col space-y-4'>
+          {/* Year selector */}
           <select
             value={selectedYear}
             onChange={(e) => setSelectedYear(e.target.value)}
-            className='form-select rounded-md border border-gray-300 px-2 py-1 text-sm text-black'
-            disabled={!showHeatmap && !showRatSightings}>
+            className='form-select w-full rounded-md border border-gray-300 px-2 py-1 text-sm text-black'
+            disabled={!showHeatmap && !showRatSightings}
+          >
             <option value='all'>All Years</option>
-            {availableYears.map((year) => (
+            {getActiveYears(showHeatmap, showRatSightings, availableYears, ratYears).map((year) => (
               <option key={year} value={year}>
                 {year}
               </option>
             ))}
           </select>
-        </div>
-        <div className='border-t border-gray-200 pt-2'>
-          <label className='flex cursor-pointer items-center space-x-2'>
-            <input
-              type='checkbox'
-              checked={showRatSightings}
-              onChange={(e) => setShowRatSightings(e.target.checked)}
-              className='form-checkbox h-4 w-4 text-red-600'
-              disabled={isLoadingRats}
-            />
-            <span className='text-sm font-medium text-gray-700'>
-              {isLoadingRats ? 'Loading Rat Sightings...' : 'Show Rat Sightings'}
-            </span>
-          </label>
-        </div>
-        <div className='border-t border-gray-200 pt-2'>
-          <label className='flex cursor-pointer items-center space-x-2'>
-            <input
-              type='checkbox'
-              checked={showEVStations}
-              onChange={(e) => setShowEVStations(e.target.checked)}
-              className='form-checkbox h-4 w-4 text-green-600'
-            />
-            <span className='text-sm font-medium text-gray-700'>
-              Show EV Stations
-            </span>
-          </label>
-        </div>
-        <div className='text-xs italic text-gray-500'>
-          {(showHeatmap || showRatSightings) &&
-            `Showing data from ${
-              selectedYear === 'all' ? 'all years' : selectedYear
-            }`}
+
+          {/* Layer toggles */}
+          <div className='space-y-2'>
+            <label className='flex cursor-pointer items-center space-x-2'>
+              <input
+                type='checkbox'
+                checked={showHeatmap}
+                onChange={(e) => {
+                  setShowHeatmap(e.target.checked);
+                  if (e.target.checked) setShowRatSightings(false);
+                }}
+                className='form-checkbox h-4 w-4 text-blue-600'
+              />
+              <span className='text-sm font-medium text-gray-700'>
+                Show Power Outages
+              </span>
+            </label>
+
+            <label className='flex cursor-pointer items-center space-x-2'>
+              <input
+                type='checkbox'
+                checked={showRatSightings}
+                onChange={(e) => {
+                  setShowRatSightings(e.target.checked);
+                  if (e.target.checked) setShowHeatmap(false);
+                }}
+                className='form-checkbox h-4 w-4 text-red-600'
+                disabled={isLoadingRats}
+              />
+              <motion.span 
+                className='text-sm font-medium text-gray-700 flex items-center gap-2'
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.2 }}
+              >
+                {isLoadingRats ? (
+                  <>
+                    <Sparkles className='h-4 w-4 animate-spin' />
+                    Loading Rat Sightings...
+                  </>
+                ) : (
+                  'Show Rat Sightings'
+                )}
+              </motion.span>
+            </label>
+
+            <label className='flex cursor-pointer items-center space-x-2'>
+              <input
+                type='checkbox'
+                checked={showEVStations}
+                onChange={(e) => setShowEVStations(e.target.checked)}
+                className='form-checkbox h-4 w-4 text-green-600'
+              />
+              <span className='text-sm font-medium text-gray-700'>
+                Show EV Stations
+              </span>
+            </label>
+          </div>
+
+          <div className='text-xs italic text-gray-500'>
+            {(showHeatmap || showRatSightings) && (
+              <motion.span
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.2 }}
+              >
+                Showing {showHeatmap ? 'outages' : 'rat sightings'} from{' '}
+                {selectedYear === 'all' ? 'all years' : selectedYear}
+              </motion.span>
+            )}
+          </div>
         </div>
       </div>
       <div ref={mapContainerRef} className='h-[100vh] w-full' />
