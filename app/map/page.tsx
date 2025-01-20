@@ -18,6 +18,7 @@ import {
   Target,
   TrendingUp,
   Zap,
+  PlusCircle,
 } from 'lucide-react';
 import FontawesomeMarker from 'mapbox-gl-fontawesome-markers';
 
@@ -264,6 +265,12 @@ const getActiveYears = (
   return [];
 };
 
+interface NewProjectMarker {
+  lngLat: [number, number];
+  type: 'solar' | 'wind' | 'hydro' | 'biomass';
+  capacity: number;
+}
+
 export default function Home() {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
@@ -280,6 +287,9 @@ export default function Home() {
   const [ratSightingsData, setRatSightingsData] = useState<RatSighting[]>([]);
   const [isLoadingRats, setIsLoadingRats] = useState(false);
   const [ratYears, setRatYears] = useState<string[]>([]);
+  const [isAddingProject, setIsAddingProject] = useState(false);
+  const [newProjectMarker, setNewProjectMarker] = useState<NewProjectMarker | null>(null);
+  const [showProjectDialog, setShowProjectDialog] = useState(false);
 
   const getPowerOutageData = async (year: string) => {
     // Transform the data into GeoJSON format
@@ -338,16 +348,13 @@ export default function Home() {
     };
     return geojsonData;
   };
-
   // Update the heatmap when year changes
   useEffect(() => {
-    // Add check for map initialization
-    if (!mapRef.current || !mapRef.current.loaded()) return;
-
-    const source = mapRef.current.getSource('power-outages');
-    if (source) {
+    if (mapRef.current?.getSource('power-outages')) {
       getPowerOutageData(selectedYear).then((data) => {
-        (source as mapboxgl.GeoJSONSource).setData(data);
+        (
+          mapRef.current?.getSource('power-outages') as mapboxgl.GeoJSONSource
+        )?.setData(data);
       });
     }
   }, [selectedYear]);
@@ -373,7 +380,11 @@ export default function Home() {
         const clickedElement = document.elementFromPoint(e.point.x, e.point.y);
         const isMarkerClick = clickedElement?.closest('.mapboxgl-marker');
         if (!isMarkerClick) {
-          setSelectedProject(undefined);
+          if (isAddingProject) {
+            handleMapClick(e);
+          } else {
+            setSelectedProject(undefined);
+          }
         }
       });
 
@@ -556,10 +567,8 @@ export default function Home() {
     return () => {
       mapRef.current?.remove();
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // Add layer toggle controls
-  // const [showHeatmap, setShowHeatmap] = useState(true);
 
   useEffect(() => {
     if (mapRef.current) {
@@ -609,13 +618,10 @@ export default function Home() {
           setRatSightingsData(data);
           setRatYears(getRatYears(data));
           
-          // Add check for map initialization
-          if (!mapRef.current || !mapRef.current.loaded()) return;
-
-          const source = mapRef.current.getSource('rat-sightings');
-          if (source) {
+          // Update the map source with the new data
+          if (mapRef.current?.getSource('rat-sightings')) {
             getRatSightingsData(selectedYear, data).then((geoData) => {
-              (source as mapboxgl.GeoJSONSource).setData(geoData);
+              (mapRef.current?.getSource('rat-sightings') as mapboxgl.GeoJSONSource)?.setData(geoData);
             });
           }
         })
@@ -626,34 +632,219 @@ export default function Home() {
           setIsLoadingRats(false);
         });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showRatSightings, selectedYear]);
 
   // Add a separate effect to update sources when year changes
   useEffect(() => {
-    // Add check for map initialization
-    if (!mapRef.current || !mapRef.current.loaded()) return;
-
     // Update power outages data
-    const powerOutagesSource = mapRef.current.getSource('power-outages');
-    if (powerOutagesSource) {
+    if (mapRef.current?.getSource('power-outages')) {
       getPowerOutageData(selectedYear).then((data) => {
-        (powerOutagesSource as mapboxgl.GeoJSONSource).setData(data);
+        (mapRef.current?.getSource('power-outages') as mapboxgl.GeoJSONSource)?.setData(data);
       });
     }
 
     // Update rat sightings data
-    const ratSightingsSource = mapRef.current.getSource('rat-sightings');
-    if (ratSightingsSource && ratSightingsData.length > 0) {
+    if (mapRef.current?.getSource('rat-sightings') && ratSightingsData.length > 0) {
       getRatSightingsData(selectedYear, ratSightingsData).then((data) => {
-        (ratSightingsSource as mapboxgl.GeoJSONSource).setData(data);
+        (mapRef.current?.getSource('rat-sightings') as mapboxgl.GeoJSONSource)?.setData(data);
       });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedYear, ratSightingsData]);
+
+  useEffect(() => {
+    if (!mapRef.current) return;
+
+    const map = mapRef.current;
+
+    const onMapClick = (e: mapboxgl.MapMouseEvent) => {
+        // console.log('Map clicked at:', e.lngLat);
+        if (isAddingProject) {
+            handleMapClick(e);
+        }
+    };
+
+    map.on('click', onMapClick);
+
+    return () => {
+        map.off('click', onMapClick);
+    };
+// eslint-disable-next-line react-hooks/exhaustive-deps
+}, [isAddingProject]);
+
+  const handleMapClick = (e: mapboxgl.MapMouseEvent) => {
+    if (!isAddingProject) return;
+    
+    // Remove existing temporary marker if any
+    const existingMarker = document.querySelector('.new-project-marker');
+    existingMarker?.remove();
+
+    const marker = new FontawesomeMarker({
+      icon: 'fa-solid fa-location-pin',
+      iconColor: 'white',
+      color: '#BF40BF',
+      className: 'new-project-marker'
+    })
+      .setLngLat(e.lngLat)
+      .addTo(mapRef.current!);
+
+    const markerElement = marker.getElement();
+    markerElement.style.fontSize = '24px';
+    markerElement.style.cursor = 'pointer';
+
+    setNewProjectMarker({
+      lngLat: [e.lngLat.lng, e.lngLat.lat],
+      type: 'solar',
+      capacity: 100
+    });
+
+    setShowProjectDialog(true);
+  };
+
+  const ProjectDialog = ({ 
+    marker, 
+    onClose, 
+    onSave 
+  }: { 
+    marker: NewProjectMarker; 
+    onClose: () => void; 
+    onSave: (project: Project) => void;
+  }) => {
+    const [type, setType] = useState(marker.type);
+    const [capacity, setCapacity] = useState(marker.capacity);
+
+    const handleSave = () => {
+      // Calculate estimated metrics based on type and capacity
+      const estimatedMetrics = {
+        solar: {
+          co2Reduction: capacity * 1.5,
+          homesServed: capacity * 250,
+          jobsCreated: capacity * 0.5
+        },
+        wind: {
+          co2Reduction: capacity * 2.0,
+          homesServed: capacity * 300,
+          jobsCreated: capacity * 0.3
+        },
+        hydro: {
+          co2Reduction: capacity * 2.5,
+          homesServed: capacity * 400,
+          jobsCreated: capacity * 0.4
+        },
+        biomass: {
+          co2Reduction: capacity * 1.0,
+          homesServed: capacity * 200,
+          jobsCreated: capacity * 0.6
+        }
+      };
+
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const metrics = estimatedMetrics[type];
+      
+      onSave({
+        projectName: `New ${type.charAt(0).toUpperCase() + type.slice(1)} Project`,
+        renewableTechnology: type,
+        projectStatus: 'Proposed',
+        newRenewableCapacityMw: capacity,
+        georeference: `POINT (${marker.lngLat[0]} ${marker.lngLat[1]})`,
+        bidQuantityMwh: capacity * 8760 * 0.3, // Estimated annual generation
+        environmentalScore: 75,
+        socialScore: 70,
+        householdIncome: 65000, // Default value
+        projectScore: 72,
+        // Add other required fields with default/calculated values
+      } as Project);
+    };
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 20 }}
+        className="absolute right-4 top-20 z-50 w-96 rounded-lg bg-white p-6 shadow-xl"
+      >
+        <h2 className="mb-4 text-lg font-semibold">New Renewable Project</h2>
+        
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Project Type</label>
+            <select
+              value={type}
+              onChange={(e) => setType(e.target.value as NewProjectMarker['type'])}
+              className="mt-1 block w-full rounded-md border border-gray-300 p-2"
+            >
+              <option value="solar">Solar</option>
+              <option value="wind">Wind</option>
+              <option value="hydro">Hydro</option>
+              <option value="biomass">Biomass</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Capacity (MW)
+            </label>
+            <input
+              type="number"
+              value={capacity}
+              onChange={(e) => setCapacity(Number(e.target.value))}
+              className="mt-1 block w-full rounded-md border border-gray-300 p-2"
+            />
+          </div>
+
+          <div className="flex justify-end space-x-2">
+            <button
+              onClick={onClose}
+              className="rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            >
+              Create Project
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    );
+  };
 
   return (
     <div>
+      {/* Add this instruction message when in adding project mode */}
+      {isAddingProject && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          className="absolute left-1/2 top-4 z-50 -translate-x-1/2 transform rounded-lg bg-blue-600 px-4 py-2 text-sm text-white shadow-lg"
+        >
+          Click anywhere on the map to place your renewable energy project
+        </motion.div>
+      )}
+
       <div className='absolute right-4 top-4 z-10 space-y-2 rounded-lg bg-white p-2 shadow-md'>
         <div className='flex flex-col space-y-4'>
+          {/* Add Project Button - Add this first */}
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => {
+              
+              setIsAddingProject(!isAddingProject);
+          }}            className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-medium ${
+              isAddingProject 
+                ? 'bg-blue-100 text-blue-700' 
+                : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+            }`}
+          >
+            <PlusCircle className="h-4 w-4" />
+            {isAddingProject ? 'Cancel' : 'Add Project'}
+          </motion.button>
+
           {/* Year selector */}
           <select
             value={selectedYear}
@@ -671,71 +862,60 @@ export default function Home() {
 
           {/* Layer toggles */}
           <div className='space-y-2'>
-            {/* Historical Data Section */}
-            <div className='space-y-2'>
-              <h3 className='text-sm font-semibold text-gray-900'>Historical Data</h3>
-              <label className='flex cursor-pointer items-center space-x-2'>
-                <input
-                  type='checkbox'
-                  checked={showHeatmap}
-                  onChange={(e) => {
-                    setShowHeatmap(e.target.checked);
-                    if (e.target.checked) setShowRatSightings(false);
-                  }}
-                  className='form-checkbox h-4 w-4 text-blue-600'
-                />
-                <span className='text-sm font-medium text-gray-700'>
-                  Show Power Outages
-                </span>
-              </label>
+            <label className='flex cursor-pointer items-center space-x-2'>
+              <input
+                type='checkbox'
+                checked={showHeatmap}
+                onChange={(e) => {
+                  setShowHeatmap(e.target.checked);
+                  if (e.target.checked) setShowRatSightings(false);
+                }}
+                className='form-checkbox h-4 w-4 text-blue-600'
+              />
+              <span className='text-sm font-medium text-gray-700'>
+                Show Power Outages
+              </span>
+            </label>
 
-              <label className='flex cursor-pointer items-center space-x-2'>
-                <input
-                  type='checkbox'
-                  checked={showRatSightings}
-                  onChange={(e) => {
-                    setShowRatSightings(e.target.checked);
-                    if (e.target.checked) setShowHeatmap(false);
-                  }}
-                  className='form-checkbox h-4 w-4 text-red-600'
-                  disabled={isLoadingRats}
-                />
-                <motion.span 
-                  className='text-sm font-medium text-gray-700 flex items-center gap-2'
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  {isLoadingRats ? (
-                    <>
-                      <Sparkles className='h-4 w-4 animate-spin' />
-                      Loading Rat Sightings...
-                    </>
-                  ) : (
-                    'Show Rat Sightings'
-                  )}
-                </motion.span>
-              </label>
-            </div>
+            <label className='flex cursor-pointer items-center space-x-2'>
+              <input
+                type='checkbox'
+                checked={showRatSightings}
+                onChange={(e) => {
+                  setShowRatSightings(e.target.checked);
+                  if (e.target.checked) setShowHeatmap(false);
+                }}
+                className='form-checkbox h-4 w-4 text-red-600'
+                disabled={isLoadingRats}
+              />
+              <motion.span 
+                className='text-sm font-medium text-gray-700 flex items-center gap-2'
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.2 }}
+              >
+                {isLoadingRats ? (
+                  <>
+                    <Sparkles className='h-4 w-4 animate-spin' />
+                    Loading Rat Sightings...
+                  </>
+                ) : (
+                  'Show Rat Sightings'
+                )}
+              </motion.span>
+            </label>
 
-            {/* Divider */}
-            <div className='my-2 border-t border-gray-200' />
-
-            {/* Infrastructure Section */}
-            <div className='space-y-2'>
-              <h3 className='text-sm font-semibold text-gray-900'>Infrastructure</h3>
-              <label className='flex cursor-pointer items-center space-x-2'>
-                <input
-                  type='checkbox'
-                  checked={showEVStations}
-                  onChange={(e) => setShowEVStations(e.target.checked)}
-                  className='form-checkbox h-4 w-4 text-green-600'
-                />
-                <span className='text-sm font-medium text-gray-700'>
-                  Show EV Stations
-                </span>
-              </label>
-            </div>
+            <label className='flex cursor-pointer items-center space-x-2'>
+              <input
+                type='checkbox'
+                checked={showEVStations}
+                onChange={(e) => setShowEVStations(e.target.checked)}
+                className='form-checkbox h-4 w-4 text-green-600'
+              />
+              <span className='text-sm font-medium text-gray-700'>
+                Show EV Stations
+              </span>
+            </label>
           </div>
 
           <div className='text-xs italic text-gray-500'>
@@ -762,6 +942,22 @@ export default function Home() {
           />
         )}
       </AnimatePresence>
+      {newProjectMarker && showProjectDialog && (
+        <ProjectDialog
+          marker={newProjectMarker}
+          onClose={() => {
+            setNewProjectMarker(null);
+            setIsAddingProject(false);
+            const marker = document.querySelector('.new-project-marker');
+            marker?.remove();
+          }}
+          onSave={(project) => {
+            setSelectedProject(project);
+            setNewProjectMarker(null);
+            setIsAddingProject(false);
+          }}
+        />
+      )}
     </div>
   );
 }
