@@ -23,7 +23,8 @@ import FontawesomeMarker from 'mapbox-gl-fontawesome-markers';
 
 import { getProjectRecommendations } from '@/app/actions/groq';
 import evStations from '@/datasets/NYC_EV_Fleet_Station_Network_20250119.json';
-import powerOutages from '@/datasets/power_outage_complaints_20250118.json';
+import powerOutagesData from '@/datasets/power_outage_complaints_20250118.json';
+const powerOutages = powerOutagesData as PowerOutage[];
 import largeScaleRenewablePowerProjects from '@/datasets/updated_dataset_with_scores2.json';
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!;
@@ -226,8 +227,8 @@ function getMarkerConfig(project: Project | EVStation): MarkerConfig {
 function getUniqueYears(outages: PowerOutage[]): string[] {
   const years = outages
     .map((outage) => new Date(outage.createdDate).getFullYear())
-    .filter((year, index, self) => self.indexOf(year) === index) // Get unique years
-    .sort((a, b) => b - a); // Sort descending
+    .filter((year, index, self) => self.indexOf(year) === index)
+    .sort((a, b) => b - a);
 
   return years.map((year) => year.toString());
 }
@@ -241,7 +242,7 @@ export default function Home() {
   const [showHeatmap, setShowHeatmap] = useState(false);
   const [selectedYear, setSelectedYear] = useState<string>('all');
   const [availableYears] = useState<string[]>(() =>
-    getUniqueYears(powerOutages as PowerOutage[])
+    getUniqueYears(powerOutages)
   );
   const [showEVStations, setShowEVStations] = useState(false);
 
