@@ -661,60 +661,71 @@ export default function Home() {
 
           {/* Layer toggles */}
           <div className='space-y-2'>
-            <label className='flex cursor-pointer items-center space-x-2'>
-              <input
-                type='checkbox'
-                checked={showHeatmap}
-                onChange={(e) => {
-                  setShowHeatmap(e.target.checked);
-                  if (e.target.checked) setShowRatSightings(false);
-                }}
-                className='form-checkbox h-4 w-4 text-blue-600'
-              />
-              <span className='text-sm font-medium text-gray-700'>
-                Show Power Outages
-              </span>
-            </label>
+            {/* Historical Data Section */}
+            <div className='space-y-2'>
+              <h3 className='text-sm font-semibold text-gray-900'>Historical Data</h3>
+              <label className='flex cursor-pointer items-center space-x-2'>
+                <input
+                  type='checkbox'
+                  checked={showHeatmap}
+                  onChange={(e) => {
+                    setShowHeatmap(e.target.checked);
+                    if (e.target.checked) setShowRatSightings(false);
+                  }}
+                  className='form-checkbox h-4 w-4 text-blue-600'
+                />
+                <span className='text-sm font-medium text-gray-700'>
+                  Show Power Outages
+                </span>
+              </label>
 
-            <label className='flex cursor-pointer items-center space-x-2'>
-              <input
-                type='checkbox'
-                checked={showRatSightings}
-                onChange={(e) => {
-                  setShowRatSightings(e.target.checked);
-                  if (e.target.checked) setShowHeatmap(false);
-                }}
-                className='form-checkbox h-4 w-4 text-red-600'
-                disabled={isLoadingRats}
-              />
-              <motion.span 
-                className='text-sm font-medium text-gray-700 flex items-center gap-2'
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.2 }}
-              >
-                {isLoadingRats ? (
-                  <>
-                    <Sparkles className='h-4 w-4 animate-spin' />
-                    Loading Rat Sightings...
-                  </>
-                ) : (
-                  'Show Rat Sightings'
-                )}
-              </motion.span>
-            </label>
+              <label className='flex cursor-pointer items-center space-x-2'>
+                <input
+                  type='checkbox'
+                  checked={showRatSightings}
+                  onChange={(e) => {
+                    setShowRatSightings(e.target.checked);
+                    if (e.target.checked) setShowHeatmap(false);
+                  }}
+                  className='form-checkbox h-4 w-4 text-red-600'
+                  disabled={isLoadingRats}
+                />
+                <motion.span 
+                  className='text-sm font-medium text-gray-700 flex items-center gap-2'
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {isLoadingRats ? (
+                    <>
+                      <Sparkles className='h-4 w-4 animate-spin' />
+                      Loading Rat Sightings...
+                    </>
+                  ) : (
+                    'Show Rat Sightings'
+                  )}
+                </motion.span>
+              </label>
+            </div>
 
-            <label className='flex cursor-pointer items-center space-x-2'>
-              <input
-                type='checkbox'
-                checked={showEVStations}
-                onChange={(e) => setShowEVStations(e.target.checked)}
-                className='form-checkbox h-4 w-4 text-green-600'
-              />
-              <span className='text-sm font-medium text-gray-700'>
-                Show EV Stations
-              </span>
-            </label>
+            {/* Divider */}
+            <div className='my-2 border-t border-gray-200' />
+
+            {/* Infrastructure Section */}
+            <div className='space-y-2'>
+              <h3 className='text-sm font-semibold text-gray-900'>Infrastructure</h3>
+              <label className='flex cursor-pointer items-center space-x-2'>
+                <input
+                  type='checkbox'
+                  checked={showEVStations}
+                  onChange={(e) => setShowEVStations(e.target.checked)}
+                  className='form-checkbox h-4 w-4 text-green-600'
+                />
+                <span className='text-sm font-medium text-gray-700'>
+                  Show EV Stations
+                </span>
+              </label>
+            </div>
           </div>
 
           <div className='text-xs italic text-gray-500'>
