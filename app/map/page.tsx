@@ -341,11 +341,13 @@ export default function Home() {
 
   // Update the heatmap when year changes
   useEffect(() => {
-    if (mapRef.current?.getSource('power-outages')) {
+    // Add check for map initialization
+    if (!mapRef.current || !mapRef.current.loaded()) return;
+
+    const source = mapRef.current.getSource('power-outages');
+    if (source) {
       getPowerOutageData(selectedYear).then((data) => {
-        (
-          mapRef.current?.getSource('power-outages') as mapboxgl.GeoJSONSource
-        )?.setData(data);
+        (source as mapboxgl.GeoJSONSource).setData(data);
       });
     }
   }, [selectedYear]);
@@ -607,10 +609,13 @@ export default function Home() {
           setRatSightingsData(data);
           setRatYears(getRatYears(data));
           
-          // Update the map source with the new data
-          if (mapRef.current?.getSource('rat-sightings')) {
+          // Add check for map initialization
+          if (!mapRef.current || !mapRef.current.loaded()) return;
+
+          const source = mapRef.current.getSource('rat-sightings');
+          if (source) {
             getRatSightingsData(selectedYear, data).then((geoData) => {
-              (mapRef.current?.getSource('rat-sightings') as mapboxgl.GeoJSONSource)?.setData(geoData);
+              (source as mapboxgl.GeoJSONSource).setData(geoData);
             });
           }
         })
@@ -625,17 +630,22 @@ export default function Home() {
 
   // Add a separate effect to update sources when year changes
   useEffect(() => {
+    // Add check for map initialization
+    if (!mapRef.current || !mapRef.current.loaded()) return;
+
     // Update power outages data
-    if (mapRef.current?.getSource('power-outages')) {
+    const powerOutagesSource = mapRef.current.getSource('power-outages');
+    if (powerOutagesSource) {
       getPowerOutageData(selectedYear).then((data) => {
-        (mapRef.current?.getSource('power-outages') as mapboxgl.GeoJSONSource)?.setData(data);
+        (powerOutagesSource as mapboxgl.GeoJSONSource).setData(data);
       });
     }
 
     // Update rat sightings data
-    if (mapRef.current?.getSource('rat-sightings') && ratSightingsData.length > 0) {
+    const ratSightingsSource = mapRef.current.getSource('rat-sightings');
+    if (ratSightingsSource && ratSightingsData.length > 0) {
       getRatSightingsData(selectedYear, ratSightingsData).then((data) => {
-        (mapRef.current?.getSource('rat-sightings') as mapboxgl.GeoJSONSource)?.setData(data);
+        (ratSightingsSource as mapboxgl.GeoJSONSource).setData(data);
       });
     }
   }, [selectedYear, ratSightingsData]);
