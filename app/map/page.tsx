@@ -26,6 +26,7 @@ import evStations from '@/datasets/NYC_EV_Fleet_Station_Network_20250119.json';
 import powerOutagesData from '@/datasets/power_outage_complaints_20250118.json';
 const powerOutages = powerOutagesData as PowerOutage[];
 import largeScaleRenewablePowerProjects from '@/datasets/updated_dataset_with_scores2.json';
+import { getRats } from '@/app/actions/rats';
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!;
 
@@ -134,6 +135,14 @@ interface EVStation {
   bin: number;
   bbl: number;
   neighborhoodTabulationAreaNta2020: string;
+}
+
+export interface RatSighting {
+  latitude: number;
+  longitude: number;
+  created_date: string;
+  incident_address: string;
+  borough: string;
 }
 
 type MarkerConfig = {
@@ -245,6 +254,9 @@ export default function Home() {
     getUniqueYears(powerOutages)
   );
   const [showEVStations, setShowEVStations] = useState(false);
+  const [showRatSightings, setShowRatSightings] = useState(false);
+  const [ratSightingsData, setRatSightingsData] = useState<RatSighting[]>([]);
+  const [isLoadingRats, setIsLoadingRats] = useState(false);
 
   const getPowerOutageData = async (year: string) => {
     // Transform the data into GeoJSON format
@@ -272,6 +284,32 @@ export default function Home() {
             created_date: outage.createdDate,
             address: outage.incidentAddress,
             borough: outage.borough,
+          },
+        })),
+    };
+    return geojsonData;
+  };
+
+  const getRatSightingsData = async (year: string, data: RatSighting[] = ratSightingsData) => {
+    const geojsonData: GeoJSON.FeatureCollection = {
+      type: 'FeatureCollection',
+      features: data
+        .filter((sighting: RatSighting) => {
+          if (year === 'all') return true;
+          const sightingYear = new Date(sighting.created_date).getFullYear().toString();
+          return sightingYear === year;
+        })
+        .map((sighting: RatSighting) => ({
+          type: 'Feature',
+          geometry: {
+            type: 'Point',
+            coordinates: [sighting.longitude, sighting.latitude],
+          },
+          properties: {
+            incidents: 1,
+            created_date: sighting.created_date,
+            address: sighting.incident_address,
+            borough: sighting.borough,
           },
         })),
     };
@@ -414,6 +452,69 @@ export default function Home() {
 
           // Add EV station markers
           await addEVStationMarkers(mapRef.current!, setSelectedProject);
+
+          // Add rat sightings heatmap source and layer
+          const ratData = await getRatSightingsData(selectedYear);
+          mapRef.current?.addSource('rat-sightings', {
+            type: 'geojson',
+            data: ratData,
+          });
+
+          mapRef.current?.addLayer({
+            id: 'rat-sightings-heat',
+            type: 'heatmap',
+            source: 'rat-sightings',
+            layout: {
+              visibility: 'none',
+            },
+            paint: {
+              'heatmap-weight': [
+                'interpolate',
+                ['linear'],
+                ['get', 'incidents'],
+                0,
+                0,
+                10,
+                1,
+              ],
+              'heatmap-intensity': [
+                'interpolate',
+                ['linear'],
+                ['zoom'],
+                0,
+                1,
+                15,
+                3,
+              ],
+              'heatmap-color': [
+                'interpolate',
+                ['linear'],
+                ['heatmap-density'],
+                0,
+                'rgba(33,102,172,0)',
+                0.2,
+                'rgb(103,169,207)',
+                0.4,
+                'rgb(209,229,240)',
+                0.6,
+                'rgb(253,219,199)',
+                0.8,
+                'rgb(239,138,98)',
+                1,
+                'rgb(178,24,43)',
+              ],
+              'heatmap-radius': [
+                'interpolate',
+                ['linear'],
+                ['zoom'],
+                0,
+                2,
+                15,
+                20,
+              ],
+              'heatmap-opacity': 0.6,
+            },
+          });
         } catch (error) {
           console.error('Error initializing map:', error);
         }
@@ -459,6 +560,54 @@ export default function Home() {
     }
   }, [showEVStations]);
 
+  useEffect(() => {
+    if (mapRef.current) {
+      const visibility = showRatSightings ? 'visible' : 'none';
+      if (mapRef.current.getLayer('rat-sightings-heat')) {
+        mapRef.current.setLayoutProperty(
+          'rat-sightings-heat',
+          'visibility',
+          visibility
+        );
+      }
+    }
+  }, [showRatSightings]);
+
+  // Update the rat sightings data when year changes
+  useEffect(() => {
+    if (mapRef.current?.getSource('rat-sightings')) {
+      getRatSightingsData(selectedYear).then((data) => {
+        (
+          mapRef.current?.getSource('rat-sightings') as mapboxgl.GeoJSONSource
+        )?.setData(data);
+      });
+    }
+  }, [selectedYear]);
+
+  // Add effect to fetch rat data when showing rat sightings
+  useEffect(() => {
+    if (showRatSightings && ratSightingsData.length === 0) {
+      setIsLoadingRats(true);
+      getRats()
+        .then(data => {
+          setRatSightingsData(data);
+          // Update the map source if it exists
+          if (mapRef.current?.getSource('rat-sightings')) {
+            getRatSightingsData(selectedYear, data).then((geoData) => {
+              (mapRef.current?.getSource('rat-sightings') as mapboxgl.GeoJSONSource)?.setData(geoData);
+            });
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching rat data:', error);
+          // You might want to show an error message to the user here
+        })
+        .finally(() => {
+          setIsLoadingRats(false);
+        });
+    }
+  }, [showRatSightings]);
+
   return (
     <div>
       <div className='absolute right-4 top-4 z-10 space-y-2 rounded-lg bg-white p-2 shadow-md'>
@@ -478,7 +627,7 @@ export default function Home() {
             value={selectedYear}
             onChange={(e) => setSelectedYear(e.target.value)}
             className='form-select rounded-md border border-gray-300 px-2 py-1 text-sm text-black'
-            disabled={!showHeatmap}>
+            disabled={!showHeatmap && !showRatSightings}>
             <option value='all'>All Years</option>
             {availableYears.map((year) => (
               <option key={year} value={year}>
@@ -486,6 +635,20 @@ export default function Home() {
               </option>
             ))}
           </select>
+        </div>
+        <div className='border-t border-gray-200 pt-2'>
+          <label className='flex cursor-pointer items-center space-x-2'>
+            <input
+              type='checkbox'
+              checked={showRatSightings}
+              onChange={(e) => setShowRatSightings(e.target.checked)}
+              className='form-checkbox h-4 w-4 text-red-600'
+              disabled={isLoadingRats}
+            />
+            <span className='text-sm font-medium text-gray-700'>
+              {isLoadingRats ? 'Loading Rat Sightings...' : 'Show Rat Sightings'}
+            </span>
+          </label>
         </div>
         <div className='border-t border-gray-200 pt-2'>
           <label className='flex cursor-pointer items-center space-x-2'>
@@ -501,8 +664,8 @@ export default function Home() {
           </label>
         </div>
         <div className='text-xs italic text-gray-500'>
-          {showHeatmap &&
-            `Showing outages from ${
+          {(showHeatmap || showRatSightings) &&
+            `Showing data from ${
               selectedYear === 'all' ? 'all years' : selectedYear
             }`}
         </div>

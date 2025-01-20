@@ -1,6 +1,6 @@
 'use server';
 
-import { RatSighting } from '@/app/outage/page';
+import { RatSighting } from '@/app/map/page';
 
 export const getRats = async () => {
   const token = process.env.APP_TOKEN;
@@ -31,7 +31,17 @@ export const getRats = async () => {
       const data = await response.json();
       if (data.length === 0) break; // No more data to fetch
 
-      allData = [...allData, ...data];
+      // Transform the data to match our RatSighting interface
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const transformedData = data.map((item: any) => ({
+        latitude: parseFloat(item.latitude),
+        longitude: parseFloat(item.longitude),
+        created_date: item.created_date,
+        incident_address: item.incident_address,
+        borough: item.borough,
+      }));
+
+      allData = [...allData, ...transformedData];
       offset += limit;
     }
 
