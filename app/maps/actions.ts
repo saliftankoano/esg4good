@@ -1,5 +1,6 @@
 'use server';
 
+import { EVChargingStationsSchema } from '@/types/evChargingStations';
 import { OutagesSchema } from '@/types/outages';
 import { ProjectsSchema } from '@/types/projects';
 
@@ -86,6 +87,46 @@ export async function getOutages({
     return outages;
   } catch (error) {
     console.error('Failed to fetch outages:', error);
+    throw error;
+  }
+}
+
+export async function getEVChargingStations({
+  limit = 1000,
+  offset = 0,
+}: {
+  /**
+   * The number of results to return
+   *
+   * @default 1000
+   */
+  limit?: number;
+  /**
+   * The index of the result array where to start the returned list of results.
+   *
+   * @default 0
+   **/
+  offset?: number;
+}) {
+  try {
+    const response = await fetch(
+      `https://data.cityofnewyork.us/resource/fc53-9hrv.json?$limit=${limit}&$offset=${offset}`,
+      {
+        headers: {
+          'X-App-Token': SOCRATA_APP_TOKEN,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('API Error');
+    }
+
+    const data = await response.json();
+    const evChargingStations = EVChargingStationsSchema.parse(data);
+    return evChargingStations;
+  } catch (error) {
+    console.error('Failed to fetch ev charging stations:', error);
     throw error;
   }
 }
