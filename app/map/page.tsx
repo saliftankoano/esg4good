@@ -357,13 +357,24 @@ export default function Home() {
   };
   // Update the heatmap when year changes
   useEffect(() => {
-    if (mapRef.current?.getSource('power-outages')) {
-      getPowerOutageData(selectedYear).then((data) => {
-        (
-          mapRef.current?.getSource('power-outages') as mapboxgl.GeoJSONSource
-        )?.setData(data);
-      });
-    }
+    // Check if map exists and is loaded
+    if (!mapRef.current || !mapRef.current.loaded()) return;
+
+    // Wait for next tick to ensure map is fully initialized
+    const updateSource = async () => {
+      try {
+        // Check if source exists
+        const source = mapRef.current?.getSource('power-outages');
+        if (source) {
+          const data = await getPowerOutageData(selectedYear);
+          (source as mapboxgl.GeoJSONSource).setData(data);
+        }
+      } catch (error) {
+        console.error('Error updating power outages source:', error);
+      }
+    };
+
+    updateSource();
   }, [selectedYear]);
 
   useEffect(() => {
@@ -400,131 +411,141 @@ export default function Home() {
         try {
           // Add power outage heatmap layer
           const outageData = await getPowerOutageData(selectedYear);
-          mapRef.current?.addSource('power-outages', {
-            type: 'geojson',
-            data: outageData,
-          });
 
-          mapRef.current?.addLayer({
-            id: 'power-outage-heat',
-            type: 'heatmap',
-            source: 'power-outages',
-            layout: {
-              visibility: 'none',
-            },
-            paint: {
-              'heatmap-weight': [
-                'interpolate',
-                ['linear'],
-                ['get', 'incidents'],
-                0,
-                0,
-                10,
-                1,
-              ],
-              'heatmap-intensity': [
-                'interpolate',
-                ['linear'],
-                ['zoom'],
-                0,
-                1,
-                15,
-                3,
-              ],
-              'heatmap-color': [
-                'interpolate',
-                ['linear'],
-                ['heatmap-density'],
-                0,
-                'rgba(0,0,255,0)',
-                0.2,
-                'rgb(0,0,255)',
-                0.4,
-                'rgb(0,255,255)',
-                0.6,
-                'rgb(255,255,0)',
-                0.8,
-                'rgb(255,128,0)',
-                1,
-                'rgb(255,0,0)',
-              ],
-              'heatmap-radius': [
-                'interpolate',
-                ['linear'],
-                ['zoom'],
-                0,
-                2,
-                15,
-                20,
-              ],
-              'heatmap-opacity': 0.6,
-            },
-          });
+          // Check if source exists before adding it
+          const powerOutagesSource = mapRef.current?.getSource('power-outages');
+          if (!powerOutagesSource) {
+            // Source doesn't exist, so add it
+            mapRef.current?.addSource('power-outages', {
+              type: 'geojson',
+              data: outageData,
+            });
 
-          // Add rat sightings source and layer
-          mapRef.current?.addSource('rat-sightings', {
-            type: 'geojson',
-            data: {
-              type: 'FeatureCollection',
-              features: [],
-            },
-          });
+            mapRef.current?.addLayer({
+              id: 'power-outage-heat',
+              type: 'heatmap',
+              source: 'power-outages',
+              layout: {
+                visibility: 'none',
+              },
+              paint: {
+                'heatmap-weight': [
+                  'interpolate',
+                  ['linear'],
+                  ['get', 'incidents'],
+                  0,
+                  0,
+                  10,
+                  1,
+                ],
+                'heatmap-intensity': [
+                  'interpolate',
+                  ['linear'],
+                  ['zoom'],
+                  0,
+                  1,
+                  15,
+                  3,
+                ],
+                'heatmap-color': [
+                  'interpolate',
+                  ['linear'],
+                  ['heatmap-density'],
+                  0,
+                  'rgba(0,0,255,0)',
+                  0.2,
+                  'rgb(0,0,255)',
+                  0.4,
+                  'rgb(0,255,255)',
+                  0.6,
+                  'rgb(255,255,0)',
+                  0.8,
+                  'rgb(255,128,0)',
+                  1,
+                  'rgb(255,0,0)',
+                ],
+                'heatmap-radius': [
+                  'interpolate',
+                  ['linear'],
+                  ['zoom'],
+                  0,
+                  2,
+                  15,
+                  20,
+                ],
+                'heatmap-opacity': 0.6,
+              },
+            });
+          }
 
-          mapRef.current?.addLayer({
-            id: 'rat-sightings-heat',
-            type: 'heatmap',
-            source: 'rat-sightings',
-            layout: {
-              visibility: 'none',
-            },
-            paint: {
-              'heatmap-weight': [
-                'interpolate',
-                ['linear'],
-                ['get', 'incidents'],
-                0,
-                0,
-                10,
-                1,
-              ],
-              'heatmap-intensity': [
-                'interpolate',
-                ['linear'],
-                ['zoom'],
-                0,
-                1,
-                15,
-                3,
-              ],
-              'heatmap-color': [
-                'interpolate',
-                ['linear'],
-                ['heatmap-density'],
-                0,
-                'rgba(33,102,172,0)',
-                0.2,
-                'rgb(103,169,207)',
-                0.4,
-                'rgb(209,229,240)',
-                0.6,
-                'rgb(253,219,199)',
-                0.8,
-                'rgb(239,138,98)',
-                1,
-                'rgb(178,24,43)',
-              ],
-              'heatmap-radius': [
-                'interpolate',
-                ['linear'],
-                ['zoom'],
-                0,
-                2,
-                15,
-                20,
-              ],
-              'heatmap-opacity': 0.6,
-            },
-          });
+          // Check if rat sightings source exists before adding it
+          const ratSightingsSource = mapRef.current?.getSource('rat-sightings');
+          if (!ratSightingsSource) {
+            // Source doesn't exist, so add it
+            mapRef.current?.addSource('rat-sightings', {
+              type: 'geojson',
+              data: {
+                type: 'FeatureCollection',
+                features: [],
+              },
+            });
+
+            mapRef.current?.addLayer({
+              id: 'rat-sightings-heat',
+              type: 'heatmap',
+              source: 'rat-sightings',
+              layout: {
+                visibility: 'none',
+              },
+              paint: {
+                'heatmap-weight': [
+                  'interpolate',
+                  ['linear'],
+                  ['get', 'incidents'],
+                  0,
+                  0,
+                  10,
+                  1,
+                ],
+                'heatmap-intensity': [
+                  'interpolate',
+                  ['linear'],
+                  ['zoom'],
+                  0,
+                  1,
+                  15,
+                  3,
+                ],
+                'heatmap-color': [
+                  'interpolate',
+                  ['linear'],
+                  ['heatmap-density'],
+                  0,
+                  'rgba(33,102,172,0)',
+                  0.2,
+                  'rgb(103,169,207)',
+                  0.4,
+                  'rgb(209,229,240)',
+                  0.6,
+                  'rgb(253,219,199)',
+                  0.8,
+                  'rgb(239,138,98)',
+                  1,
+                  'rgb(178,24,43)',
+                ],
+                'heatmap-radius': [
+                  'interpolate',
+                  ['linear'],
+                  ['zoom'],
+                  0,
+                  2,
+                  15,
+                  20,
+                ],
+                'heatmap-opacity': 0.6,
+              },
+            });
+          }
 
           // Replace getProjects() with direct JSON usage
           // @ts-expect-error - TODO: fix this
@@ -561,7 +582,7 @@ export default function Home() {
           // Add EV station markers
           await addEVStationMarkers(mapRef.current!, setSelectedProject);
         } catch (error) {
-          console.error('Error initializing map:', error);
+          console.error('Error initializing map sources and layers:', error);
         }
       });
     };
