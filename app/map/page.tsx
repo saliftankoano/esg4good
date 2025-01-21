@@ -14,20 +14,21 @@ import {
   ArrowUpRight,
   CheckCircle2,
   Lightbulb,
+  PlusCircle,
   Sparkles,
   Target,
   TrendingUp,
   Zap,
-  PlusCircle,
 } from 'lucide-react';
 import FontawesomeMarker from 'mapbox-gl-fontawesome-markers';
 
 import { getProjectRecommendations } from '@/app/actions/groq';
+import { getRats } from '@/app/actions/rats';
 import evStations from '@/datasets/NYC_EV_Fleet_Station_Network_20250119.json';
 import powerOutagesData from '@/datasets/power_outage_complaints_20250118.json';
-const powerOutages = powerOutagesData as PowerOutage[];
 import largeScaleRenewablePowerProjects from '@/datasets/updated_dataset_with_scores2.json';
-import { getRats } from '@/app/actions/rats';
+
+const powerOutages = powerOutagesData as PowerOutage[];
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!;
 
@@ -288,7 +289,8 @@ export default function Home() {
   const [isLoadingRats, setIsLoadingRats] = useState(false);
   const [ratYears, setRatYears] = useState<string[]>([]);
   const [isAddingProject, setIsAddingProject] = useState(false);
-  const [newProjectMarker, setNewProjectMarker] = useState<NewProjectMarker | null>(null);
+  const [newProjectMarker, setNewProjectMarker] =
+    useState<NewProjectMarker | null>(null);
   const [showProjectDialog, setShowProjectDialog] = useState(false);
 
   const getPowerOutageData = async (year: string) => {
@@ -323,13 +325,18 @@ export default function Home() {
     return geojsonData;
   };
 
-  const getRatSightingsData = async (year: string, data: RatSighting[] = ratSightingsData) => {
+  const getRatSightingsData = async (
+    year: string,
+    data: RatSighting[] = ratSightingsData
+  ) => {
     const geojsonData: GeoJSON.FeatureCollection = {
       type: 'FeatureCollection',
       features: data
         .filter((sighting: RatSighting) => {
           if (year === 'all') return true;
-          const sightingYear = new Date(sighting.created_date).getFullYear().toString();
+          const sightingYear = new Date(sighting.created_date)
+            .getFullYear()
+            .toString();
           return sightingYear === year;
         })
         .map((sighting: RatSighting) => ({
@@ -553,7 +560,6 @@ export default function Home() {
 
           // Add EV station markers
           await addEVStationMarkers(mapRef.current!, setSelectedProject);
-
         } catch (error) {
           console.error('Error initializing map:', error);
         }
@@ -567,7 +573,7 @@ export default function Home() {
     return () => {
       mapRef.current?.remove();
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -614,25 +620,29 @@ export default function Home() {
     if (showRatSightings && ratSightingsData.length === 0) {
       setIsLoadingRats(true);
       getRats()
-        .then(data => {
+        .then((data) => {
           setRatSightingsData(data);
           setRatYears(getRatYears(data));
-          
+
           // Update the map source with the new data
           if (mapRef.current?.getSource('rat-sightings')) {
             getRatSightingsData(selectedYear, data).then((geoData) => {
-              (mapRef.current?.getSource('rat-sightings') as mapboxgl.GeoJSONSource)?.setData(geoData);
+              (
+                mapRef.current?.getSource(
+                  'rat-sightings'
+                ) as mapboxgl.GeoJSONSource
+              )?.setData(geoData);
             });
           }
         })
-        .catch(error => {
+        .catch((error) => {
           console.error('Error fetching rat data:', error);
         })
         .finally(() => {
           setIsLoadingRats(false);
         });
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showRatSightings, selectedYear]);
 
   // Add a separate effect to update sources when year changes
@@ -640,17 +650,24 @@ export default function Home() {
     // Update power outages data
     if (mapRef.current?.getSource('power-outages')) {
       getPowerOutageData(selectedYear).then((data) => {
-        (mapRef.current?.getSource('power-outages') as mapboxgl.GeoJSONSource)?.setData(data);
+        (
+          mapRef.current?.getSource('power-outages') as mapboxgl.GeoJSONSource
+        )?.setData(data);
       });
     }
 
     // Update rat sightings data
-    if (mapRef.current?.getSource('rat-sightings') && ratSightingsData.length > 0) {
+    if (
+      mapRef.current?.getSource('rat-sightings') &&
+      ratSightingsData.length > 0
+    ) {
       getRatSightingsData(selectedYear, ratSightingsData).then((data) => {
-        (mapRef.current?.getSource('rat-sightings') as mapboxgl.GeoJSONSource)?.setData(data);
+        (
+          mapRef.current?.getSource('rat-sightings') as mapboxgl.GeoJSONSource
+        )?.setData(data);
       });
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedYear, ratSightingsData]);
 
   useEffect(() => {
@@ -659,23 +676,23 @@ export default function Home() {
     const map = mapRef.current;
 
     const onMapClick = (e: mapboxgl.MapMouseEvent) => {
-        // console.log('Map clicked at:', e.lngLat);
-        if (isAddingProject) {
-            handleMapClick(e);
-        }
+      // console.log('Map clicked at:', e.lngLat);
+      if (isAddingProject) {
+        handleMapClick(e);
+      }
     };
 
     map.on('click', onMapClick);
 
     return () => {
-        map.off('click', onMapClick);
+      map.off('click', onMapClick);
     };
-// eslint-disable-next-line react-hooks/exhaustive-deps
-}, [isAddingProject]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAddingProject]);
 
   const handleMapClick = (e: mapboxgl.MapMouseEvent) => {
     if (!isAddingProject) return;
-    
+
     // Remove existing temporary marker if any
     const existingMarker = document.querySelector('.new-project-marker');
     existingMarker?.remove();
@@ -684,7 +701,7 @@ export default function Home() {
       icon: 'fa-solid fa-location-pin',
       iconColor: 'white',
       color: '#BF40BF',
-      className: 'new-project-marker'
+      className: 'new-project-marker',
     })
       .setLngLat(e.lngLat)
       .addTo(mapRef.current!);
@@ -696,19 +713,19 @@ export default function Home() {
     setNewProjectMarker({
       lngLat: [e.lngLat.lng, e.lngLat.lat],
       type: 'solar',
-      capacity: 100
+      capacity: 100,
     });
 
     setShowProjectDialog(true);
   };
 
-  const ProjectDialog = ({ 
-    marker, 
-    onClose, 
-    onSave 
-  }: { 
-    marker: NewProjectMarker; 
-    onClose: () => void; 
+  const ProjectDialog = ({
+    marker,
+    onClose,
+    onSave,
+  }: {
+    marker: NewProjectMarker;
+    onClose: () => void;
     onSave: (project: Project) => void;
   }) => {
     const [type, setType] = useState(marker.type);
@@ -720,28 +737,28 @@ export default function Home() {
         solar: {
           co2Reduction: capacity * 1.5,
           homesServed: capacity * 250,
-          jobsCreated: capacity * 0.5
+          jobsCreated: capacity * 0.5,
         },
         wind: {
           co2Reduction: capacity * 2.0,
           homesServed: capacity * 300,
-          jobsCreated: capacity * 0.3
+          jobsCreated: capacity * 0.3,
         },
         hydro: {
           co2Reduction: capacity * 2.5,
           homesServed: capacity * 400,
-          jobsCreated: capacity * 0.4
+          jobsCreated: capacity * 0.4,
         },
         biomass: {
           co2Reduction: capacity * 1.0,
           homesServed: capacity * 200,
-          jobsCreated: capacity * 0.6
-        }
+          jobsCreated: capacity * 0.6,
+        },
       };
 
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const metrics = estimatedMetrics[type];
-      
+
       onSave({
         projectName: `New ${type.charAt(0).toUpperCase() + type.slice(1)} Project`,
         renewableTechnology: type,
@@ -762,48 +779,48 @@ export default function Home() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 20 }}
-        className="absolute right-4 top-20 z-50 w-96 rounded-lg bg-white p-6 shadow-xl"
-      >
-        <h2 className="mb-4 text-lg font-semibold">New Renewable Project</h2>
-        
-        <div className="space-y-4">
+        className='absolute right-4 top-20 z-50 w-96 rounded-lg bg-white p-6 shadow-xl'>
+        <h2 className='mb-4 text-lg font-semibold'>New Renewable Project</h2>
+
+        <div className='space-y-4'>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Project Type</label>
+            <label className='block text-sm font-medium text-gray-700'>
+              Project Type
+            </label>
             <select
               value={type}
-              onChange={(e) => setType(e.target.value as NewProjectMarker['type'])}
-              className="mt-1 block w-full rounded-md border border-gray-300 p-2"
-            >
-              <option value="solar">Solar</option>
-              <option value="wind">Wind</option>
-              <option value="hydro">Hydro</option>
-              <option value="biomass">Biomass</option>
+              onChange={(e) =>
+                setType(e.target.value as NewProjectMarker['type'])
+              }
+              className='mt-1 block w-full rounded-md border border-gray-300 p-2'>
+              <option value='solar'>Solar</option>
+              <option value='wind'>Wind</option>
+              <option value='hydro'>Hydro</option>
+              <option value='biomass'>Biomass</option>
             </select>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className='block text-sm font-medium text-gray-700'>
               Capacity (MW)
             </label>
             <input
-              type="number"
+              type='number'
               value={capacity}
               onChange={(e) => setCapacity(Number(e.target.value))}
-              className="mt-1 block w-full rounded-md border border-gray-300 p-2"
+              className='mt-1 block w-full rounded-md border border-gray-300 p-2'
             />
           </div>
 
-          <div className="flex justify-end space-x-2">
+          <div className='flex justify-end space-x-2'>
             <button
               onClick={onClose}
-              className="rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
-            >
+              className='rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200'>
               Cancel
             </button>
             <button
               onClick={handleSave}
-              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-            >
+              className='rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700'>
               Create Project
             </button>
           </div>
@@ -820,8 +837,7 @@ export default function Home() {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
-          className="absolute left-1/2 top-4 z-50 -translate-x-1/2 transform rounded-lg bg-blue-600 px-4 py-2 text-sm text-white shadow-lg"
-        >
+          className='absolute left-1/2 top-4 z-50 -translate-x-1/2 transform rounded-lg bg-blue-600 px-4 py-2 text-sm text-white shadow-lg'>
           Click anywhere on the map to place your renewable energy project
         </motion.div>
       )}
@@ -833,15 +849,14 @@ export default function Home() {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => {
-              
               setIsAddingProject(!isAddingProject);
-          }}            className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-medium ${
-              isAddingProject 
-                ? 'bg-blue-100 text-blue-700' 
+            }}
+            className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-medium ${
+              isAddingProject
+                ? 'bg-blue-100 text-blue-700'
                 : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
-            }`}
-          >
-            <PlusCircle className="h-4 w-4" />
+            }`}>
+            <PlusCircle className='h-4 w-4' />
             {isAddingProject ? 'Cancel' : 'Add Project'}
           </motion.button>
 
@@ -850,10 +865,14 @@ export default function Home() {
             value={selectedYear}
             onChange={(e) => setSelectedYear(e.target.value)}
             className='form-select w-full rounded-md border border-gray-300 px-2 py-1 text-sm text-black'
-            disabled={!showHeatmap && !showRatSightings}
-          >
+            disabled={!showHeatmap && !showRatSightings}>
             <option value='all'>All Years</option>
-            {getActiveYears(showHeatmap, showRatSightings, availableYears, ratYears).map((year) => (
+            {getActiveYears(
+              showHeatmap,
+              showRatSightings,
+              availableYears,
+              ratYears
+            ).map((year) => (
               <option key={year} value={year}>
                 {year}
               </option>
@@ -888,12 +907,11 @@ export default function Home() {
                 className='form-checkbox h-4 w-4 text-red-600'
                 disabled={isLoadingRats}
               />
-              <motion.span 
-                className='text-sm font-medium text-gray-700 flex items-center gap-2'
+              <motion.span
+                className='flex items-center gap-2 text-sm font-medium text-gray-700'
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ duration: 0.2 }}
-              >
+                transition={{ duration: 0.2 }}>
                 {isLoadingRats ? (
                   <>
                     <Sparkles className='h-4 w-4 animate-spin' />
@@ -923,8 +941,7 @@ export default function Home() {
               <motion.span
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ duration: 0.2 }}
-              >
+                transition={{ duration: 0.2 }}>
                 Showing {showHeatmap ? 'outages' : 'rat sightings'} from{' '}
                 {selectedYear === 'all' ? 'all years' : selectedYear}
               </motion.span>
@@ -1705,16 +1722,14 @@ function getProjectImage(project: Project) {
   if (tech.includes('biogas')) {
     return '/images/gas.jpg';
   }
-  if(tech.includes('biomass')) {
+  if (tech.includes('biomass')) {
     return '/images/biomass.jpg';
   }
-  if (
-    tech.includes('ev') ||
-    tech.includes('charger') ||
-    tech.includes('fuel cell')
-  ) {
+  if (tech.includes('ev') || tech.includes('charger')) {
+    return '/images/ev.jpg';
+  }
+  if (tech.includes('fuel cell')) {
     return '/images/ev.avif';
   }
-
   return 'https://placehold.co/600x400';
 }
