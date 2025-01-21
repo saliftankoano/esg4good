@@ -5,11 +5,11 @@ import { OutagesSchema } from '@/types/outages';
 import { ProjectsSchema } from '@/types/projects';
 import { RatSightingsSchema } from '@/types/ratSightings';
 
-const SOCRATA_APP_TOKEN = '';
+const SOCRATA_APP_TOKEN = process.env.SOCRATA_APP_TOKEN;
 
-// if (!SOCRATA_APP_TOKEN) {
-//   throw new Error('SOCRATA_APP_TOKEN environment variable is not set');
-// }
+if (!SOCRATA_APP_TOKEN) {
+  throw new Error('SOCRATA_APP_TOKEN is not set');
+}
 
 export async function getProjects({
   limit = 1000,
