@@ -3,6 +3,7 @@
 import { EVChargingStationsSchema } from '@/types/evChargingStations';
 import { OutagesSchema } from '@/types/outages';
 import { ProjectsSchema } from '@/types/projects';
+import { RatSightingsSchema } from '@/types/ratSightings';
 
 const SOCRATA_APP_TOKEN = '';
 
@@ -127,6 +128,46 @@ export async function getEVChargingStations({
     return evChargingStations;
   } catch (error) {
     console.error('Failed to fetch ev charging stations:', error);
+    throw error;
+  }
+}
+
+export async function getRatSightings({
+  limit = 1000,
+  offset = 0,
+}: {
+  /**
+   * The number of results to return
+   *
+   * @default 1000
+   */
+  limit?: number;
+  /**
+   * The index of the result array where to start the returned list of results.
+   *
+   * @default 0
+   **/
+  offset?: number;
+}) {
+  try {
+    const response = await fetch(
+      `https://data.cityofnewyork.us/resource/3q43-55fe.json?$limit=${limit}&$offset=${offset}`,
+      {
+        headers: {
+          'X-App-Token': SOCRATA_APP_TOKEN,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('API Error');
+    }
+
+    const data = await response.json();
+    const ratSightings = RatSightingsSchema.parse(data);
+    return ratSightings;
+  } catch (error) {
+    console.error('Failed to fetch rat sightings:', error);
     throw error;
   }
 }
