@@ -20,26 +20,26 @@ export const RatSightingSchema = z
     /**
      * Acronym of responding City Government Agency
      */
-    agency: z.string(),
+    agency: z.enum(['DOHMH']),
 
     /**
      * Full Agency name of responding City Government Agency
      */
-    agency_name: z.string(),
+    agency_name: z.enum(['Department of Health and Mental Hygiene']),
 
     /**
      * This is the first level of a hierarchy identifying the topic of the
      * incident or condition. Complaint Type may have a corresponding
      * Descriptor (below) or may stand alone.
      */
-    complaint_type: z.string(),
+    complaint_type: z.enum(['Rodent']),
 
     /**
      * This is associated to the Complaint Type, and provides further detail
      * on the incident or condition. Descriptor values are dependent on the
      * Complaint Type, and are not always required in SR.
      */
-    descriptor: z.string(),
+    descriptor: z.enum(['Rat Sighting']),
 
     /**
      * Describes the type of location used in the address information
@@ -49,7 +49,7 @@ export const RatSightingSchema = z
     /**
      * Incident location zip code, provided by geo validation.
      */
-    // Handle extremely rare edge case, where the string 'N/A' is returned
+    //? Handle extremely rare edge case, where the string 'N/A' is returned
     incident_zip: z.preprocess(
       (val) => (val === 'N/A' ? undefined : val),
       z.coerce.number().optional()
@@ -88,7 +88,16 @@ export const RatSightingSchema = z
     /**
      * Type of incident location information available.
      */
-    address_type: z.string().optional(),
+    address_type: z
+      .enum([
+        'ADDRESS',
+        'BLOCKFACE',
+        'INTERSECTION',
+        'LATLONG',
+        'PLACENAME',
+        'UNRECOGNIZED',
+      ])
+      .optional(),
 
     /**
      * City of the incident location provided by geovalidation.
@@ -110,7 +119,15 @@ export const RatSightingSchema = z
     /**
      * Status of SR submitted
      */
-    status: z.string(),
+    status: z.enum([
+      'Assigned',
+      'Closed',
+      'Draft',
+      'In Progress',
+      'Open',
+      'Pending',
+      'Unspecified',
+    ]),
 
     /**
      * Date when responding agency is expected to update the SR. This is
@@ -132,7 +149,16 @@ export const RatSightingSchema = z
     /**
      * Provided by the submitter and confirmed by geovalidation.
      */
-    borough: z.string().optional(),
+    borough: z
+      .enum([
+        'BRONX',
+        'BROOKLYN',
+        'MANHATTAN',
+        'QUEENS',
+        'STATEN ISLAND',
+        'Unspecified',
+      ])
+      .optional(),
 
     /**
      * Geo validated, X coordinate of the incident location.
@@ -153,7 +179,17 @@ export const RatSightingSchema = z
     /**
      * The borough of incident if it is a Parks Dept facility
      */
-    park_borough: z.string().optional(),
+    park_borough: z
+      .enum([
+        'BRONX',
+        'BROOKLYN',
+        'MANHATTAN',
+        'QUEENS',
+        'STATEN ISLAND',
+        'Unspecified',
+        '',
+      ])
+      .optional(),
 
     /**
      * If the incident is a taxi, this field describes the type of TLC

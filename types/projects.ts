@@ -16,7 +16,17 @@ export const ProjectSchema = z
      * in the offshore wind program. Tier 4 represents renewable energy and
      * transmission projects.
      */
-    eligibility: z.string(),
+    eligibility: z
+      .enum([
+        'Maintenance',
+        'Non-Tier 1',
+        'OREC',
+        'Tier 1',
+        'Tier 2',
+        'Tier 4',
+        'N/A',
+      ])
+      .optional(),
 
     /**
      * Name of project. Project names with an asterisk have the same project
@@ -39,7 +49,7 @@ export const ProjectSchema = z
      * adjustment may have their Index REC Strike Price or Fixed REC Price
      * adjusted consistent with the methodology described in each applicable RFP.
      */
-    inflation_adjustment: z.string().optional(),
+    inflation_adjustment: z.enum(['Yes']).optional(),
 
     /**
      * The Fixed REC bid price of Tier 1 and Non-Tier 1 awarded projects in US
@@ -63,7 +73,7 @@ export const ProjectSchema = z
      * refer to each specific RFP's Section on Incremental Economic Benefits to
      * New York State.
      */
-    incremental_economic_benefits_claimed: z.string().optional(),
+    incremental_economic_benefits_claimed: z.enum(['Yes']).optional(),
 
     /**
      * For Non-Tier 1 or Tier I Projects, indicates the verification status of
@@ -75,7 +85,7 @@ export const ProjectSchema = z
      * represent – verification not due yet/ not yet complete; no economic
      * benefit claim; or project cancelled/terminated.
      */
-    project_met_economic_benefits_threshold: z.string().optional(),
+    project_met_economic_benefits_threshold: z.enum(['Yes']).optional(),
 
     /**
      * The type of renewable energy technology for the project currently under
@@ -83,21 +93,38 @@ export const ProjectSchema = z
      * Hydroelectric, Biomass, Biogas-LFG, Biogas-ADG, Fuel Cell, Solar,
      * Geothermal, Maintenance Biomass, or Maintenance Hydroelectric.
      */
-    renewable_technology: z.string().optional(),
+    renewable_technology: z
+      .enum([
+        'Biogas - ADG',
+        'Biogas - LFG',
+        'Biomass',
+        'Fuel Cell',
+        'Hydroelectric',
+        'Land Based Wind',
+        'Land-based Wind',
+        'Maintenance Biomass',
+        'Maintenance Hydroelectric',
+        'Offshore Wind',
+        'Solar',
+        'Wind/Solar',
+      ])
+      .optional(),
 
     /**
      * Indicates the type of eligible generation, either Existing or New
      * Generation. Blank cells represent data that was not required or is not
      * currently available.
      */
-    generation_type: z.string().optional(),
+    generation_type: z.enum(['Existing', 'New']).optional(),
 
     /**
      * Vintage Generation Facility (VGS). VGFs are projects that are either
      * upgraded, returned to service, relocated, or repowered, and must meet
      * the specified requirements
      */
-    type_of_existing: z.string().optional(),
+    type_of_existing: z
+      .enum(['Repower', 'Return to Service', 'Upgrade'])
+      .optional(),
 
     /**
      * Name of the Seller in NYSERDA's agreement. A counterparty is the other
@@ -218,7 +245,12 @@ export const ProjectSchema = z
      * operation. A status of Operational means that the project has entered
      * operation.
      */
-    project_status: z.string(),
+    project_status: z.enum([
+      'Cancelled',
+      'Completed',
+      'Under Development',
+      'Operational',
+    ]),
 
     /**
      * Date declared as the Commercial Operation date of facility by NYISO or

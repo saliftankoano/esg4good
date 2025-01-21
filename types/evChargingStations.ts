@@ -15,7 +15,16 @@ export const EVChargingStationSchema = z
     /**
      * The type of charger at the station
      */
-    type_of_charger: z.string(),
+    type_of_charger: z.enum([
+      'DOT Municipal Level 2 Charger',
+      'DOT Municipal Level 3 Charger',
+      'EV Solar Arc Charger',
+      'EV Solar Canopy Charger',
+      'L2 DOT Flo Curbside Charger',
+      'Level 2 Charger',
+      'Level 3 Fast Charger',
+      'Mobile Charger',
+    ]),
 
     /**
      * The # of ports at the station
@@ -44,12 +53,29 @@ export const EVChargingStationSchema = z
      * Staten Island - Richmond County). NYC's boroughs have existed since the
      * consolidation of the city in 1898.
      */
-    borough: z.string().optional(),
+    borough: z
+      .enum([
+        'Bronx',
+        'Brooklyn',
+        'Manhattan',
+        'Queens',
+        'Staten Island',
+        'Upstate',
+      ])
+      .optional(),
 
     /**
      * Is the charging station open to the general public?
      */
-    public_charger: z.string().optional(),
+    public_charger: z
+      .enum([
+        '*adapter required for use',
+        'City Hall Charging',
+        'NYC DC Fast Public Charging',
+        'Solar Carport Charging',
+        'Yes',
+      ])
+      .optional(),
 
     /**
      * Is there a fee to use the charger at the station for City drivers?

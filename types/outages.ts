@@ -32,31 +32,38 @@ export const OutageSchema = z
     /**
      * Acronym of responding City Government Agency
      */
-    agency: z.string(),
+    agency: z.enum(['HPD']),
 
     /**
      * Full Agency name of responding City Government Agency
      */
-    agency_name: z.string(),
+    agency_name: z.enum([
+      'Department of Housing Preservation and Development',
+      'Division of Alternative Management',
+    ]),
 
     /**
      * This is the first level of a hierarchy identifying the topic of the
      * incident or condition. Complaint Type may have a corresponding
      * Descriptor (below) or may stand alone.
      */
-    complaint_type: z.string(),
+    complaint_type: z.enum(['ELECTRIC', 'Electric']),
 
     /**
      * This is associated to the Complaint Type, and provides further detail on
      * the incident or condition. Descriptor values are dependent on the
      * Complaint Type, and are not always required in SR.
      */
-    descriptor: z.string(),
+    descriptor: z.enum(['POWER OUTAGE', 'Power Outage']),
 
     /**
      * Describes the type of location used in the address information
      */
-    location_type: z.string(),
+    location_type: z.enum([
+      'Apartment',
+      'Building-Wide',
+      'RESIDENTIAL BUILDING',
+    ]),
 
     /**
      * Incident location zip code, provided by geo validation.
@@ -96,7 +103,7 @@ export const OutageSchema = z
     /**
      * Type of incident location information available.
      */
-    address_type: z.string().optional(),
+    address_type: z.enum(['ADDRESS']).optional(),
 
     /**
      * City of the incident location provided by geovalidation.
@@ -118,7 +125,7 @@ export const OutageSchema = z
     /**
      * Status of SR submitted
      */
-    status: z.string(),
+    status: z.enum(['Closed', 'In Progress', 'Open']),
 
     /**
      * Date when responding agency is expected to update the SR. This is based
@@ -139,7 +146,14 @@ export const OutageSchema = z
     /**
      * Provided by the submitter and confirmed by geovalidation.
      */
-    borough: z.string(),
+    borough: z.enum([
+      'BRONX',
+      'BROOKLYN',
+      'MANHATTAN',
+      'QUEENS',
+      'STATEN ISLAND',
+      'Unspecified',
+    ]),
 
     /**
      * Geo validated, X coordinate of the incident location.
@@ -160,7 +174,14 @@ export const OutageSchema = z
     /**
      * The borough of incident if it is a Parks Dept facility
      */
-    park_borough: z.string(),
+    park_borough: z.enum([
+      'BRONX',
+      'BROOKLYN',
+      'MANHATTAN',
+      'QUEENS',
+      'STATEN ISLAND',
+      'Unspecified',
+    ]),
 
     /**
      * If the incident is a taxi, this field describes the type of TLC
@@ -219,15 +240,8 @@ export const OutageSchema = z
      */
     location: z
       .object({
-        latitude: z.coerce.number(),
-        longitude: z.coerce.number(),
-        needs_recoding: z.boolean(),
-        human_address: coerceObject({
-          address: z.string().optional(),
-          city: z.string().optional(),
-          state: z.string().optional(),
-          zip: z.coerce.number().optional(),
-        }),
+        coordinates: z.tuple([z.number(), z.number()]),
+        type: z.literal('Point'),
       })
       .strict()
       .optional(),
