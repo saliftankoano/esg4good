@@ -15,7 +15,7 @@ import {
   getOutages,
   getProjects,
   getRatSightings,
-} from '@/app/maps/actions';
+} from '@/app/map/v2/actions';
 import { MarkerElement } from '@/components/Marker';
 import { SideBar } from '@/components/SideBar';
 
