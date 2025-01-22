@@ -1,45 +1,52 @@
+import Image from 'next/image';
+
+import { CarIcon, RatIcon, ZapIcon } from 'lucide-react';
+
 export default function Solution() {
   return (
     <section id='solution' className='py-24'>
       <div className='container mx-auto px-4'>
         <div className='grid grid-cols-2 items-center gap-12'>
           <div className='flex h-[600px] items-center justify-center rounded-2xl bg-neutral-100'>
-            <span className='text-neutral-500'>Platform Screenshot</span>
+            <Image
+              src='/images/outage.png'
+              alt='outages'
+              width={500}
+              height={600}
+              className='h-full w-full rounded-2xl object-cover object-left-top'
+            />
           </div>
           <div className='space-y-8'>
-            <h2 className='text-4xl font-bold'>Our Solution</h2>
+            <h2 className='text-4xl font-bold'>Features</h2>
             <div className='space-y-6'>
               <div className='flex items-start space-x-4'>
-                <i className='fa-solid fa-check-circle mt-1 text-2xl text-neutral-700'></i>
+                <ZapIcon className='h-8 w-8 text-neutral-700' />
                 <div>
                   <h3 className='mb-2 text-xl font-semibold'>
-                    Automated Data Collection
+                    Power Outage Heatmap
                   </h3>
                   <p className='text-neutral-600'>
-                    AI-powered systems gather and validate ESG data from
-                    multiple sources.
+                    A heatmap of power outages across NYC
                   </p>
                 </div>
               </div>
               <div className='flex items-start space-x-4'>
-                <i className='fa-solid fa-chart-line mt-1 text-2xl text-neutral-700'></i>
+                <RatIcon className='h-8 w-8 text-neutral-700' />
                 <div>
-                  <h3 className='mb-2 text-xl font-semibold'>
-                    Real-time Analytics
-                  </h3>
+                  <h3 className='mb-2 text-xl font-semibold'>Rats Heatmap</h3>
                   <p className='text-neutral-600'>
-                    Track your sustainability metrics and progress in real-time.
+                    A heatmap of rats across NYC
                   </p>
                 </div>
               </div>
               <div className='flex items-start space-x-4'>
-                <i className='fa-solid fa-file-lines mt-1 text-2xl text-neutral-700'></i>
+                <CarIcon className='h-8 w-8 text-neutral-700' />
                 <div>
                   <h3 className='mb-2 text-xl font-semibold'>
-                    Compliance Ready Reports
+                    EV Charging Stations
                   </h3>
                   <p className='text-neutral-600'>
-                    Generate framework-compliant reports with one click.
+                    A list of EV charging stations across NYC
                   </p>
                 </div>
               </div>
