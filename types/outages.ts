@@ -1,17 +1,5 @@
 import { z } from 'zod';
 
-/* Helper function to coerce an object to a zod schema **/
-function coerceObject<T extends z.ZodRawShape>(
-  shape: T,
-  params?: z.RawCreateParams
-) {
-  return new z.ZodEffects({
-    schema: z.object(shape, params),
-    effect: { type: 'preprocess', transform: Object },
-    typeName: z.ZodFirstPartyTypeKind.ZodEffects,
-  });
-}
-
 export const OutageSchema = z
   .object({
     /**
