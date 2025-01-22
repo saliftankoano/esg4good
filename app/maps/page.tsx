@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import {
   faBolt,
@@ -17,12 +17,18 @@ import {
   getRatSightings,
 } from '@/app/maps/actions';
 import { MarkerElement } from '@/components/Marker';
+import { SideBar } from '@/components/SideBar';
 
 import 'mapbox-gl/dist/mapbox-gl.css';
 
 export default function MapsPage() {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map>(null);
+
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
 
   useEffect(() => {
     mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
@@ -36,6 +42,14 @@ export default function MapsPage() {
       });
 
       mapRef.current.addControl(new mapboxgl.NavigationControl());
+
+      mapRef.current.on('click', (e) => {
+        const target = e.originalEvent.target as HTMLElement;
+        if (target.closest('.mapboxgl-marker')) {
+          return;
+        }
+        setIsSidebarOpen(false);
+      });
     }
 
     return () => {
@@ -54,11 +68,15 @@ export default function MapsPage() {
               project.georeference?.coordinates[0] &&
               project.georeference?.coordinates[1]
             ) {
-              new mapboxgl.Marker({
+              const marker = new mapboxgl.Marker({
                 element: MarkerElement({ icon: faBolt, color: '#ccac00' }),
               })
                 .setLngLat(project.georeference.coordinates)
                 .addTo(mapRef.current!);
+
+              marker.getElement().addEventListener('click', () => {
+                setIsSidebarOpen(true);
+              });
             }
           });
         }
@@ -78,7 +96,7 @@ export default function MapsPage() {
         if (outages) {
           outages.forEach((outage) => {
             if (outage.latitude && outage.longitude) {
-              new mapboxgl.Marker({
+              const marker = new mapboxgl.Marker({
                 element: MarkerElement({
                   icon: faPlugCircleXmark,
                   color: '#ff0000',
@@ -86,6 +104,10 @@ export default function MapsPage() {
               })
                 .setLngLat([outage.longitude, outage.latitude])
                 .addTo(mapRef.current!);
+
+              marker.getElement().addEventListener('click', () => {
+                setIsSidebarOpen(true);
+              });
             }
           });
         }
@@ -103,19 +125,20 @@ export default function MapsPage() {
         const evChargingStations = await getEVChargingStations();
 
         if (evChargingStations) {
-          evChargingStations.forEach((evChargingStation) => {
-            if (evChargingStation.latitude && evChargingStation.longitude) {
-              new mapboxgl.Marker({
+          evChargingStations.forEach((station) => {
+            if (station.latitude && station.longitude) {
+              const marker = new mapboxgl.Marker({
                 element: MarkerElement({
                   icon: faChargingStation,
                   color: '#008800',
                 }),
               })
-                .setLngLat([
-                  evChargingStation.longitude,
-                  evChargingStation.latitude,
-                ])
+                .setLngLat([station.longitude, station.latitude])
                 .addTo(mapRef.current!);
+
+              marker.getElement().addEventListener('click', () => {
+                setIsSidebarOpen(true);
+              });
             }
           });
         }
@@ -133,16 +156,20 @@ export default function MapsPage() {
         const ratSightings = await getRatSightings();
 
         if (ratSightings) {
-          ratSightings.forEach((ratSighting) => {
+          ratSightings.forEach((sighting) => {
             if (
-              ratSighting.location?.coordinates[0] &&
-              ratSighting.location?.coordinates[1]
+              sighting.location?.coordinates[0] &&
+              sighting.location?.coordinates[1]
             ) {
-              new mapboxgl.Marker({
+              const marker = new mapboxgl.Marker({
                 element: MarkerElement({ icon: faBugs, color: '#000000' }),
               })
-                .setLngLat(ratSighting.location.coordinates)
+                .setLngLat(sighting.location.coordinates)
                 .addTo(mapRef.current!);
+
+              marker.getElement().addEventListener('click', () => {
+                setIsSidebarOpen(true);
+              });
             }
           });
         }
@@ -154,5 +181,10 @@ export default function MapsPage() {
     loadRatSightings();
   }, []);
 
-  return <main ref={mapContainerRef} className='h-[100vh] w-[100vw]' />;
+  return (
+    <>
+      <main ref={mapContainerRef} className='h-[100vh] w-[100vw]' />
+      <SideBar isOpen={isSidebarOpen} onClose={toggleSidebar} />
+    </>
+  );
 }

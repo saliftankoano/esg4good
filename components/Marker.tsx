@@ -24,7 +24,7 @@ export function Marker({
   icon?: IconProp;
 }) {
   return (
-    <div className='relative'>
+    <div className='relative origin-bottom cursor-pointer transition-all duration-300 hover:scale-150'>
       <svg display='block' height='41px' width='27px' viewBox='0 0 27 41'>
         <defs>
           <radialGradient id='shadowGradient'>
