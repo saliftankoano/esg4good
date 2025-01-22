@@ -1,7 +1,12 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 
-import './globals.css';
+import { config } from '@fortawesome/fontawesome-svg-core';
+
+import '@fortawesome/fontawesome-svg-core/styles.css';
+import '@/app/globals.css';
+
+config.autoAddCss = false;
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -38,6 +43,7 @@ export default function RootLayout({
       <head>
         <link rel='icon' href='/images/icon-green.png' />
         <link rel='shortcut icon' href='/images/icon-green.png' />
+        {/* TODO: Remove this once new maps page is complete */}
         <link
           rel='stylesheet'
           href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'
