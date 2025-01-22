@@ -11,8 +11,12 @@
     "format": "prettier --write ."
   },
   "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^6.5.1",
+    "@fortawesome/free-brands-svg-icons": "^6.5.1",
+    "@fortawesome/react-fontawesome": "^0.2.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "framer-motion": "^12.0.1",
     "lucide-react": "^0.473.0",
     "mapbox": "^1.0.0-beta10",
     "mapbox-gl": "^3.9.3",

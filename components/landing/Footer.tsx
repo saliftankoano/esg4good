@@ -4,9 +4,11 @@ export default function Footer() {
       <div className='container mx-auto px-4'>
         <div className='grid grid-cols-4 gap-8'>
           <div>
-            <div className='mb-6 flex items-center space-x-2'>
-              <i className='fa-solid fa-leaf text-2xl'></i>
-              <span className='text-xl font-semibold'>ESG for Good</span>
+            <div className='group mb-6 flex cursor-pointer items-center space-x-2 transition-transform duration-300 hover:scale-105'>
+              <i className='fa-solid fa-leaf text-2xl transition-colors duration-300 group-hover:text-emerald-400'></i>
+              <span className='text-xl font-semibold transition-colors duration-300 group-hover:text-emerald-400'>
+                ESG for Good
+              </span>
             </div>
             <p className='text-neutral-400'>
               Insights fast-tracking renewable energy.
