@@ -4,7 +4,17 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { motion } from 'framer-motion';
-import { ChevronRight, Map, Sparkles } from 'lucide-react';
+import {
+  ChevronRight,
+  CircleDot,
+  Home,
+  Leaf,
+  Map,
+  Sparkles,
+  Zap,
+} from 'lucide-react';
+
+import { NumberTicker } from '@/components/ui/number-ticker';
 
 export default function Hero() {
   return (
@@ -101,6 +111,74 @@ export default function Hero() {
           </motion.div>
         </div>
       </div>
+      <div className='container mx-auto'>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+          className='my-24 grid grid-cols-2 gap-12 lg:grid-cols-4'>
+          {stats.map((stat, index) => (
+            <motion.div
+              key={stat.label}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: index * 0.1 }}
+              className='group relative flex flex-col items-start transition-all duration-300'>
+              <div
+                className={`mb-4 rounded-lg ${stat.iconBg} p-2.5 transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg`}>
+                <stat.icon className={`h-5 w-5 ${stat.iconColor}`} />
+              </div>
+              <div className='flex items-baseline space-x-1'>
+                <NumberTicker
+                  value={stat.value}
+                  className='text-4xl font-bold tracking-tight text-gray-900 lg:text-5xl'
+                />
+                <span className='bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-xl font-semibold text-transparent lg:text-2xl'>
+                  {stat.metric}
+                </span>
+              </div>
+              <p className='mt-2 text-sm font-medium text-gray-500 lg:text-base'>
+                {stat.label}
+              </p>
+            </motion.div>
+          ))}
+        </motion.div>
+      </div>
     </section>
   );
 }
+
+const stats = [
+  {
+    value: 1000,
+    metric: '+',
+    label: 'Active Projects',
+    icon: CircleDot,
+    iconColor: 'text-green-600',
+    iconBg: 'bg-green-100',
+  },
+  {
+    value: 7.5,
+    metric: 'GW',
+    label: 'Clean Energy Generated',
+    icon: Zap,
+    iconColor: 'text-green-600',
+    iconBg: 'bg-green-100',
+  },
+  {
+    value: 3000000,
+    metric: '+',
+    label: 'Homes Powered',
+    icon: Home,
+    iconColor: 'text-green-600',
+    iconBg: 'bg-green-100',
+  },
+  {
+    value: 40,
+    metric: '%',
+    label: 'CO₂ Reduction',
+    icon: Leaf,
+    iconColor: 'text-green-600',
+    iconBg: 'bg-green-100',
+  },
+];
