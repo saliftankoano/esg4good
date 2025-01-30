@@ -25,7 +25,6 @@ export default function Hero() {
         <div className='absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(59,130,246,0.1),transparent_50%)]'></div>
       </div>
 
-      {/* Enhanced Floating Elements */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -63,7 +62,7 @@ export default function Hero() {
                   Renewable Energy
                 </span>
                 <svg
-                  className='absolute -bottom-2 left-0 h-3 w-full animate-pulse text-green-200'
+                  className='absolute -left-[10vw] h-3 w-full animate-pulse text-green-200 sm:top-[5vh] md:top-[5vh] lg:top-[8vh]'
                   viewBox='0 0 300 12'
                   fill='currentColor'>
                   <path
