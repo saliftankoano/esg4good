@@ -115,7 +115,7 @@ export default function Hero() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className='my-24 grid grid-cols-2 gap-12 lg:grid-cols-4'>
+          className='grid grid-cols-2 gap-12 py-24 lg:grid-cols-4'>
           {stats.map((stat, index) => (
             <motion.div
               key={stat.label}
