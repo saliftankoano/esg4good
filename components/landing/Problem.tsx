@@ -1,3 +1,6 @@
+'use client';
+
+import { motion } from 'framer-motion';
 import {
   AlertTriangleIcon,
   CircleDollarSign,
@@ -10,6 +13,8 @@ import {
   UsersIcon,
 } from 'lucide-react';
 
+import { ScrollAnimation } from '@/components/ui/scroll-animation';
+
 import { OrbitingCircles } from '../ui/orbiting-circles';
 
 export default function Problem() {
@@ -18,7 +23,7 @@ export default function Problem() {
       id='problem'
       className='bg-gradient-to-b from-gray-900 to-green-950 py-24 text-white'>
       <div className='container mx-auto flex flex-col items-center justify-center px-4'>
-        <div className='mx-auto mb-16 max-w-3xl text-center'>
+        <ScrollAnimation className='mx-auto mb-16 max-w-3xl text-center'>
           <h2 className='mb-6 text-4xl font-bold'>
             Challenges at Inception & Funding
           </h2>
@@ -26,11 +31,21 @@ export default function Problem() {
             Understanding the landscape of renewable energy, it&apos;s risks,
             and its impact is complex.
           </p>
-        </div>
-        <div className='relative flex h-[500px] w-1/2 flex-col items-center justify-center overflow-hidden rounded-lg'>
-          <span className='pointer-events-none whitespace-pre-wrap bg-gradient-to-b from-emerald-400 to-green-600 bg-clip-text text-center text-6xl font-semibold leading-none text-transparent'>
+        </ScrollAnimation>
+        <ScrollAnimation className='relative flex h-[500px] w-1/2 flex-col items-center justify-center overflow-hidden rounded-lg'>
+          <motion.span
+            className='pointer-events-none whitespace-pre-wrap bg-gradient-to-b from-emerald-400 to-green-600 bg-clip-text text-center text-6xl font-semibold leading-none text-transparent'
+            animate={{
+              scale: [1, 1.1, 1],
+              opacity: [0.5, 1, 0.5],
+            }}
+            transition={{
+              duration: 4,
+              repeat: Infinity,
+              ease: 'easeInOut',
+            }}>
             ESG
-          </span>
+          </motion.span>
 
           <OrbitingCircles iconSize={40} radius={220}>
             <div className='flex items-center gap-2'>
@@ -86,7 +101,7 @@ export default function Problem() {
               </span>
             </div>
           </OrbitingCircles>
-        </div>
+        </ScrollAnimation>
       </div>
     </section>
   );

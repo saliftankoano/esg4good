@@ -58,8 +58,8 @@ export default function Header() {
               Testimonials
             </button>
             <button
-              className='rounded-lg bg-neutral-900 px-6 py-2 text-white transition-all duration-300 hover:bg-emerald-600 hover:shadow-lg hover:shadow-emerald-600/20'
-              onClick={() => router.push('/map')}>
+              onClick={() => router.push('/map')}
+              className='rounded-lg bg-neutral-900 px-6 py-2 text-white transition-all duration-300 hover:bg-emerald-600 hover:shadow-lg hover:shadow-emerald-600/20'>
               Get Started
             </button>
           </div>

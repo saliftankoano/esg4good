@@ -1,4 +1,10 @@
+'use client';
+
+import { useRouter } from 'next/navigation';
+
 export default function Cta() {
+  const router = useRouter();
+
   return (
     <section id='cta' className='py-24'>
       <div className='container mx-auto px-4'>
@@ -10,7 +16,9 @@ export default function Cta() {
             Join thousands of investors and founders making a real impact with
             ESG for Good
           </p>
-          <button className='rounded-lg bg-white px-8 py-3 font-semibold text-neutral-900 transition-all duration-300 hover:translate-y-[-2px] hover:bg-emerald-400 hover:text-white hover:shadow-lg hover:shadow-emerald-400/20'>
+          <button
+            onClick={() => router.push('/map')}
+            className='rounded-lg bg-white px-8 py-3 font-semibold text-neutral-900 transition-all duration-300 hover:translate-y-[-2px] hover:bg-emerald-400 hover:text-white hover:shadow-lg hover:shadow-emerald-400/20'>
             Start Free Trial
           </button>
         </div>
